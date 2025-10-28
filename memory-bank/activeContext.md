@@ -1,35 +1,39 @@
 # Active Context
 
-**Last Updated**: December 2024 - Task 2.0 Complete
-**Current Phase**: Foundation Complete - Ready for Video Import
-**Focus**: Video Import System Implementation
+**Last Updated**: December 2024 - Task 4.5 Complete
+**Current Phase**: Media Library Interface Implementation - Click Handlers Complete
+**Focus**: Media Library Context Menus and Error Handling
 
 ## Current Work Status
 
 ### What We're Doing Now
-**COMPLETED**: Comprehensive foundation with data models, state management, and utility functions
-**NEXT**: Implementing video import system with FFmpeg integration
+**COMPLETED**: Video import system with FFmpeg integration (metadata extraction, thumbnail generation, file operations)
+**COMPLETED**: Media library interface with drag-and-drop functionality
+**COMPLETED**: Media library click handlers for selection and timeline addition
+**NEXT**: Adding context menus, loading states, and error handling
 
 ### Immediate Next Steps
-1. **Rust Command Infrastructure** (Priority: CRITICAL)
-   - Set up command module structure in `src-tauri/src/commands/`
-   - Implement FFmpeg probe module for metadata extraction
-   - Create thumbnail generation module
-   - Test FFmpeg sidecar execution
+1. **Media Library Context Menus** (Priority: HIGH)
+   - Implement right-click context menu for clip deletion
+   - Add loading indicators during import and thumbnail generation
+   - Handle error states with toast notifications for import failures
 
-2. **Video Import Backend** (Priority: HIGH)
-   - Implement video metadata extraction command
-   - Implement thumbnail generation command
-   - Create file picker integration
-   - Test with sample video files
-
-3. **Media Library UI** (Priority: HIGH)
-   - Create media library component
-   - Implement drag-and-drop import
-   - Display imported clips with metadata
-   - Connect UI to backend commands
+2. **Media Library Testing** (Priority: MEDIUM)
+   - Write component tests for MediaLibrary, ImportButton, and ClipCard
+   - Test drag-and-drop functionality
+   - Test error handling scenarios
 
 ## Recent Changes
+- ✅ **Task 4.5 Complete**: Click handlers for clip selection and double-click to add to timeline
+- ✅ **Media Store Fix**: Fixed computed values to be properties instead of getter methods
+- ✅ **Timeline Integration**: Media clips can now be added to timeline via double-click
+- ✅ **Clip Selection**: Visual selection state implemented in ClipCard component
+- ✅ **Task 4.4 Complete**: Drag-and-drop functionality for importing files
+- ✅ **Task 3.0 Complete**: Video import system with FFmpeg integration
+- ✅ **Rust Command Infrastructure**: Complete command module structure in `src-tauri/src/commands/`
+- ✅ **FFmpeg Integration**: Metadata extraction and thumbnail generation modules implemented
+- ✅ **File Operations**: Video import command with error handling and cleanup
+- ✅ **Backend Testing**: Unit tests for FFmpeg integration and command handlers
 - ✅ **Task 2.0 Complete**: Core data models and state management
 - ✅ **TypeScript Types**: 6 domain-specific type files with factory functions
 - ✅ **Zustand Stores**: 3 complete stores (media, timeline, export) with 77 tests
@@ -40,12 +44,14 @@
 ## Active Decisions & Considerations
 
 ### Critical Decisions Made
-1. **FFmpeg as Sidecar**: ✅ Confirmed and configured
+1. **FFmpeg as Sidecar**: ✅ Confirmed, configured, and implemented
 2. **State Management**: ✅ Zustand implemented with comprehensive stores
 3. **Timeline Rendering**: Start with DOM, migrate to Canvas only if needed
 4. **MVP Scope**: Import, timeline, preview, trim, export - NO recording yet
 5. **TypeScript Architecture**: ✅ Modular type system with 6 domain files
 6. **Testing Strategy**: ✅ Comprehensive unit testing with Vitest
+7. **Rust Command Structure**: ✅ Modular command organization with FFmpeg integration
+8. **Error Handling**: ✅ Structured error management in both frontend and backend
 
 ### Open Questions
 1. **CSS Approach**: Plain CSS for MVP (faster setup, no build config) ✅
@@ -55,36 +61,37 @@
 ### Pending Investigations
 - ✅ FFmpeg binary sourcing (completed)
 - ✅ Tauri 2.0 permission configuration (completed)
+- ✅ FFmpeg integration implementation (completed)
 - Video codec compatibility testing approach
 
 ## Current Challenges
 
 ### Technical Challenges
-1. **FFmpeg Integration Implementation** 🟡 (Reduced Risk)
-   - Foundation is solid with binaries and permissions configured
-   - Need to implement actual command execution
-   - **Mitigation**: Test early, reference Tauri 2.0 docs
-
-2. **Timeline Performance** 🟡
+1. **Timeline Performance** 🟡
    - Unknown if DOM rendering will handle 50+ clips smoothly
    - Drag operations must remain responsive
    - **Mitigation**: Start simple, profile early, optimize if needed
 
-3. **Video Playback Sync** 🟡
+2. **Video Playback Sync** 🟡
    - Keeping HTML5 video in sync with timeline playhead
    - Handling clip boundaries during playback
    - **Mitigation**: Use requestAnimationFrame, implement carefully
 
+3. **Media Library UI Performance** 🟡
+   - Thumbnail loading and caching strategy
+   - Large number of imported clips handling
+   - **Mitigation**: Implement lazy loading and virtualization if needed
+
 ### Development Challenges
 1. **Time Constraints** 🟡 (Reduced Risk)
-   - Foundation complete ahead of schedule
-   - Data layer provides solid foundation
+   - Foundation and backend complete ahead of schedule
+   - Data layer and FFmpeg integration provide solid foundation
    - **Mitigation**: Stick to task list, defer all non-MVP features
 
-2. **First Time with Tauri 2.0** 🟡 (Reduced Risk)
-   - Version 2.0 has breaking changes from v1
-   - Permission system is new but configured
-   - **Mitigation**: Reference official migration guide
+2. **UI Implementation Complexity** 🟡
+   - Drag-and-drop interactions can be complex
+   - Timeline rendering performance unknown
+   - **Mitigation**: Start with simple implementations, optimize as needed
 
 ## Implementation Strategy
 
@@ -96,12 +103,12 @@ Following this order ensures each piece builds on stable foundations:
    - ✅ FFmpeg sidecar configuration
    - ✅ Basic app structure and layout
 
-2. **Backend Foundation** 🔄 IN PROGRESS (Days 2-3)
-   - ❌ File operations and metadata extraction
-   - ❌ Thumbnail generation
-   - ❌ Rust-TypeScript bridge testing
+2. **Backend Foundation** ✅ COMPLETE (Days 2-3)
+   - ✅ File operations and metadata extraction
+   - ✅ Thumbnail generation
+   - ✅ Rust-TypeScript bridge testing
 
-3. **Core UI** (Days 3-4)
+3. **Core UI** 🔄 IN PROGRESS (Days 3-4)
    - Media library with import
    - Video player with controls
    - Basic timeline structure
@@ -129,9 +136,10 @@ Following this order ensures each piece builds on stable foundations:
 - **Packaging testing**: Build .dmg early (Day 3-4) to catch issues
 
 ### Risk Mitigation
-- ✅ **FFmpeg issues**: Foundation ready, test sidecar execution by Day 2
+- ✅ **FFmpeg issues**: Foundation ready, sidecar execution tested and working
 - **Timeline performance**: Profile by Day 4, optimize if needed
 - **Export problems**: Test simple concat by Day 5
+- **UI complexity**: Start with simple implementations, iterate based on testing
 
 ## Code Organization Guidelines
 
@@ -141,11 +149,11 @@ Following this order ensures each piece builds on stable foundations:
 - ✅ Interfaces in domain-specific files
 - ✅ Functional components with hooks
 
-### Rust Standards (Next Phase)
-- All commands async
-- Structured error types
-- Meaningful error messages
-- Clean up resources (temp files)
+### Rust Standards ✅ IMPLEMENTED
+- All commands async ✅ IMPLEMENTED
+- Structured error types ✅ IMPLEMENTED
+- Meaningful error messages ✅ IMPLEMENTED
+- Clean up resources (temp files) ✅ IMPLEMENTED
 
 ### Component Structure (Next Phase)
 - One component per file
@@ -160,27 +168,33 @@ Following this order ensures each piece builds on stable foundations:
 - ✅ No store dependencies (access via hooks)
 
 ## Current Blockers
-**None** - Foundation complete, ready for implementation
+**None** - Backend complete, ready for UI implementation
 
 ## Definition of "Done" for Current Phase
-Foundation phase is complete:
+Video import system phase is complete:
 - ✅ All dependencies installed and verified
-- ✅ FFmpeg binaries configured
+- ✅ FFmpeg binaries configured and tested
 - ✅ TypeScript types defined
 - ✅ Zustand stores implemented
 - ✅ Utility functions created
 - ✅ Comprehensive testing (155 tests)
+- ✅ Rust command infrastructure implemented
+- ✅ FFmpeg integration working (metadata extraction, thumbnail generation)
+- ✅ File operations with error handling and cleanup
 
 **Status**: ✅ **COMPLETE**
 
 ## Next Session Goals
-**Task 3.0: Build video import system with FFmpeg integration**
-1. Set up Rust command infrastructure (`src-tauri/src/commands/mod.rs`)
-2. Implement FFmpeg probe module for video metadata extraction
-3. Implement FFmpeg thumbnail generation module
-4. Create video import command
-5. Test FFmpeg sidecar execution with sample files
-6. Create basic media library UI component
+**Task 4.0: Create media library interface with drag-and-drop**
+1. Create MediaLibrary component with grid layout and empty state
+2. Implement ImportButton component with native file dialog integration
+3. Create ClipCard component displaying thumbnails, metadata, and hover effects
+4. Implement drag-and-drop functionality for importing files
+5. Add click handlers for clip selection and double-click to add to timeline
+6. Implement right-click context menu for clip deletion
+7. Add loading indicators during import and thumbnail generation
+8. Handle error states with toast notifications for import failures
+9. Write component tests for MediaLibrary, ImportButton, and ClipCard
 
 ## Technical Achievements
 
@@ -189,6 +203,8 @@ Foundation phase is complete:
 - **Comprehensive State Management**: 3 Zustand stores with full CRUD operations
 - **Utility Library**: 78 utility functions covering all common operations
 - **Test Coverage**: 155 tests with edge cases and real-world scenarios
+- **Rust Backend**: Complete command infrastructure with FFmpeg integration
+- **Error Handling**: Structured error management across frontend and backend
 
 ### Code Quality
 - **TypeScript Strict Mode**: Full type safety
@@ -196,12 +212,14 @@ Foundation phase is complete:
 - **Factory Functions**: Consistent object creation
 - **Error Handling**: Comprehensive error management
 - **Performance**: Optimized selectors and computed values
+- **Rust Standards**: Async commands, structured errors, resource cleanup
 
 ### Development Experience
 - **Hot Reload**: Fast development iteration
 - **Test Runner**: Instant feedback with Vitest
 - **DevTools**: Zustand devtools integration
 - **Documentation**: Comprehensive inline documentation
+- **FFmpeg Integration**: Working sidecar execution with proper error handling
 
 ## Notes & Reminders
 
@@ -232,23 +250,26 @@ cargo clippy
 - Memory Bank: `memory-bank/` (this directory)
 
 ### Communication Notes
-- ✅ Foundation complete ahead of schedule
-- Focus on MVP first, defer everything else
+- ✅ Foundation and backend complete ahead of schedule
+- Focus on MVP only - defer everything else
 - Prioritize working features over perfect code
 - Test early, test often
 - Package and test .dmg before final day
 
-## Current Focus: Task 3.0
-**Build video import system with FFmpeg integration**
+## Current Focus: Task 4.0
+**Create media library interface with drag-and-drop**
 
 ### Sub-tasks:
-- 3.1 Set up Rust command infrastructure
-- 3.2 Implement FFmpeg probe module for video metadata extraction
-- 3.3 Implement FFmpeg thumbnail generation module
-- 3.4 Create video import command
-- 3.5 Test FFmpeg sidecar execution
-- 3.6 Create basic media library UI component
+- 4.1 Create MediaLibrary component with grid layout and empty state
+- 4.2 Implement ImportButton component with native file dialog integration
+- 4.3 Create ClipCard component displaying thumbnails, metadata, and hover effects
+- 4.4 Implement drag-and-drop functionality for importing files
+- 4.5 Add click handlers for clip selection and double-click to add to timeline
+- 4.6 Implement right-click context menu for clip deletion
+- 4.7 Add loading indicators during import and thumbnail generation
+- 4.8 Handle error states with toast notifications for import failures
+- 4.9 Write component tests for MediaLibrary, ImportButton, and ClipCard
 
 **Estimated Time**: 1-2 days
-**Risk Level**: Medium (FFmpeg integration)
-**Dependencies**: None (foundation complete)
+**Risk Level**: Medium (UI complexity, drag-and-drop interactions)
+**Dependencies**: None (backend complete)

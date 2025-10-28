@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import { MediaClip, VideoMetadata, AppError } from '@/types';
+import { invoke } from '@tauri-apps/api/core';
+import { MediaClip, VideoMetadata, AppError, createAppError } from '@/types';
 
 // ============================================================================
 // MEDIA STORE INTERFACE
@@ -12,11 +13,18 @@ interface MediaStore {
   loading: boolean;
   error: AppError | null;
   
+  // Computed values (as properties)
+  totalClips: number;
+  totalDuration: number;
+  totalFileSize: number;
+  
   // Actions
   addClip: (clip: MediaClip) => void;
   removeClip: (clipId: string) => void;
   updateClip: (clipId: string, updates: Partial<MediaClip>) => void;
   clearClips: () => void;
+  importVideo: (filePath: string) => Promise<void>;
+  setClipLoading: (clipId: string, isLoading: boolean) => void;
   
   // Getters
   getClipById: (clipId: string) => MediaClip | undefined;
@@ -25,12 +33,23 @@ interface MediaStore {
   // Loading states
   setLoading: (loading: boolean) => void;
   setError: (error: AppError | null) => void;
-  
-  // Computed values
-  totalClips: number;
-  totalDuration: number;
-  totalFileSize: number;
 }
+
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+const calculateTotalClips = (clips: MediaClip[]): number => {
+  return clips.length;
+};
+
+const calculateTotalDuration = (clips: MediaClip[]): number => {
+  return clips.reduce((total, clip) => total + clip.metadata.duration, 0);
+};
+
+const calculateTotalFileSize = (clips: MediaClip[]): number => {
+  return clips.reduce((total, clip) => total + clip.metadata.fileSize, 0);
+};
 
 // ============================================================================
 // MEDIA STORE IMPLEMENTATION
@@ -43,6 +62,9 @@ export const useMediaStore = create<MediaStore>()(
       clips: [],
       loading: false,
       error: null,
+      totalClips: 0,
+      totalDuration: 0,
+      totalFileSize: 0,
       
       // Actions
       addClip: (clip: MediaClip) => {
@@ -51,10 +73,10 @@ export const useMediaStore = create<MediaStore>()(
             const newClips = [...state.clips, clip];
             return {
               clips: newClips,
+              totalClips: calculateTotalClips(newClips),
+              totalDuration: calculateTotalDuration(newClips),
+              totalFileSize: calculateTotalFileSize(newClips),
               error: null, // Clear any previous errors
-              totalClips: newClips.length,
-              totalDuration: newClips.reduce((total, c) => total + c.metadata.duration, 0),
-              totalFileSize: newClips.reduce((total, c) => total + c.metadata.fileSize, 0),
             };
           },
           false,
@@ -68,9 +90,9 @@ export const useMediaStore = create<MediaStore>()(
             const newClips = state.clips.filter((clip) => clip.id !== clipId);
             return {
               clips: newClips,
-              totalClips: newClips.length,
-              totalDuration: newClips.reduce((total, c) => total + c.metadata.duration, 0),
-              totalFileSize: newClips.reduce((total, c) => total + c.metadata.fileSize, 0),
+              totalClips: calculateTotalClips(newClips),
+              totalDuration: calculateTotalDuration(newClips),
+              totalFileSize: calculateTotalFileSize(newClips),
             };
           },
           false,
@@ -86,9 +108,9 @@ export const useMediaStore = create<MediaStore>()(
             );
             return {
               clips: newClips,
-              totalClips: newClips.length,
-              totalDuration: newClips.reduce((total, c) => total + c.metadata.duration, 0),
-              totalFileSize: newClips.reduce((total, c) => total + c.metadata.fileSize, 0),
+              totalClips: calculateTotalClips(newClips),
+              totalDuration: calculateTotalDuration(newClips),
+              totalFileSize: calculateTotalFileSize(newClips),
             };
           },
           false,
@@ -100,14 +122,51 @@ export const useMediaStore = create<MediaStore>()(
         set(
           {
             clips: [],
-            error: null,
             totalClips: 0,
             totalDuration: 0,
             totalFileSize: 0,
+            error: null,
           },
           false,
           'mediaStore/clearClips'
         );
+      },
+      
+      importVideo: async (filePath: string) => {
+        try {
+          set({ loading: true, error: null }, false, 'mediaStore/importVideo/start');
+          
+          // Check if file is already imported (ignore temporary clips)
+          const existingClip = get().clips.find(clip => 
+            clip.filepath === filePath && !clip.id.startsWith('temp-')
+          );
+          if (existingClip) {
+            throw new Error('File is already imported');
+          }
+          
+          // Call Tauri command to import the video
+          const result = await invoke<{
+            clip: MediaClip;
+            metadata: VideoMetadata;
+            thumbnailPath: string;
+          }>('import_video_file', { request: { file_path: filePath } });
+          
+          // Add the imported clip to the store
+          get().addClip(result.clip);
+          
+          set({ loading: false }, false, 'mediaStore/importVideo/success');
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Failed to import video';
+          set(
+            { 
+              loading: false, 
+              error: createAppError('import', errorMessage, undefined, { filePath })
+            }, 
+            false, 
+            'mediaStore/importVideo/error'
+          );
+          throw error;
+        }
       },
       
       // Getters
@@ -130,15 +189,22 @@ export const useMediaStore = create<MediaStore>()(
         set({ error }, false, 'mediaStore/setError');
       },
       
-      // Computed values (as regular properties, not getters)
-      totalClips: 0,
-      totalDuration: 0,
-      totalFileSize: 0,
+      setClipLoading: (clipId: string, isLoading: boolean) => {
+        set(
+          (state) => ({
+            clips: state.clips.map((clip) =>
+              clip.id === clipId ? { ...clip, isLoading } : clip
+            ),
+          }),
+          false,
+          'mediaStore/setClipLoading'
+        );
+      },
     }),
     {
       name: 'media-store',
       // Only enable devtools in development
-      enabled: process.env.NODE_ENV === 'development',
+      enabled: import.meta.env.DEV,
     }
   )
 );
@@ -192,6 +258,7 @@ export const useMediaActions = () =>
     removeClip: state.removeClip,
     updateClip: state.updateClip,
     clearClips: state.clearClips,
+    importVideo: state.importVideo,
     setLoading: state.setLoading,
     setError: state.setError,
   }));

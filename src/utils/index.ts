@@ -13,3 +13,6 @@ export * from './videoCalculations';
 
 // General utilities
 export * from './general';
+
+// File validation utilities
+export * from './fileValidation';

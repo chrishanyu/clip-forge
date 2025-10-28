@@ -5,7 +5,12 @@
 // file system operations, and integration with the media store.
 
 use crate::commands::{CommandResult, CommandError, validate_file_path, is_supported_video_format, get_file_size};
+use crate::ffmpeg::probe::{extract_video_metadata, ExtractMetadataRequest, VideoMetadata};
+use crate::ffmpeg::thumbnail::{generate_thumbnail, GenerateThumbnailRequest};
 use serde::{Deserialize, Serialize};
+use std::path::Path;
+use uuid::Uuid;
+use chrono;
 
 // ============================================================================
 // DATA STRUCTURES
@@ -20,9 +25,38 @@ pub struct ImportVideoRequest {
 /// Response from video import operation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ImportVideoResponse {
-    pub success: bool,
-    pub message: String,
-    pub file_path: String,
+    pub clip: MediaClip,
+    pub metadata: VideoMetadata,
+    pub thumbnail_path: String,
+}
+
+/// MediaClip represents a video clip in the media library
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MediaClip {
+    pub id: String,
+    pub filename: String,
+    pub filepath: String,
+    pub metadata: VideoMetadata,
+    pub thumbnail_path: String,
+    pub created_at: String,
+}
+
+/// Create a new MediaClip instance
+pub fn create_media_clip(
+    id: String,
+    filename: String,
+    filepath: String,
+    metadata: VideoMetadata,
+    thumbnail_path: String,
+) -> MediaClip {
+    MediaClip {
+        id,
+        filename,
+        filepath,
+        metadata,
+        thumbnail_path,
+        created_at: chrono::Utc::now().to_rfc3339(),
+    }
 }
 
 /// Request to validate a file path
@@ -45,10 +79,10 @@ pub struct ValidateFileResponse {
 // ============================================================================
 
 /// Import a video file into the application
-/// This command validates the file and prepares it for metadata extraction
+/// This command validates the file, extracts metadata, generates thumbnails, and creates a MediaClip
 #[tauri::command]
 pub async fn import_video_file(
-    _app_handle: tauri::AppHandle,
+    app_handle: tauri::AppHandle,
     request: ImportVideoRequest,
 ) -> CommandResult<ImportVideoResponse> {
     let file_path = request.file_path;
@@ -74,11 +108,52 @@ pub async fn import_video_file(
         ));
     }
     
-    // For now, just return success - metadata extraction will be handled separately
+    // Extract video metadata using FFmpeg
+    let metadata_response = extract_video_metadata(
+        app_handle.clone(),
+        ExtractMetadataRequest {
+            file_path: file_path.clone(),
+        }
+    ).await?;
+    
+    let metadata = metadata_response.metadata
+        .ok_or_else(|| CommandError::ffmpeg_error("Failed to extract video metadata".to_string()))?;
+    
+    // Generate thumbnail
+    let thumbnail_response = generate_thumbnail(
+        app_handle.clone(),
+        GenerateThumbnailRequest {
+            file_path: file_path.clone(),
+            timestamp: Some(1.0), // Extract frame at 1 second
+            width: Some(320),
+            height: Some(180),
+        }
+    ).await?;
+    
+    // Extract thumbnail path
+    let thumbnail_path = thumbnail_response.thumbnail_path
+        .ok_or_else(|| CommandError::ffmpeg_error("Failed to generate thumbnail".to_string()))?;
+    
+    // Get filename from path
+    let filename = Path::new(&file_path)
+        .file_name()
+        .and_then(|name| name.to_str())
+        .unwrap_or("unknown")
+        .to_string();
+    
+    // Create MediaClip
+    let clip = create_media_clip(
+        Uuid::new_v4().to_string(),
+        filename.clone(),
+        file_path.clone(),
+        metadata.clone(),
+        thumbnail_path.clone(),
+    );
+    
     Ok(ImportVideoResponse {
-        success: true,
-        message: "File validated successfully".to_string(),
-        file_path,
+        clip,
+        metadata,
+        thumbnail_path,
     })
 }
 
