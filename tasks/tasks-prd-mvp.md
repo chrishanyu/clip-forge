@@ -68,15 +68,15 @@
   - [x] 2.5 Create utility functions for time formatting, file size formatting, and video calculations
   - [x] 2.6 Write unit tests for all stores and utility functions
 
-- [ ] 3.0 Build video import system with FFmpeg integration
-  - [ ] 3.1 Set up Rust command infrastructure in src-tauri/src/commands/mod.rs
-  - [ ] 3.2 Implement FFmpeg probe module for video metadata extraction (duration, resolution, fps, codec)
-  - [ ] 3.3 Implement FFmpeg thumbnail generation module (extract frame at 1-second mark)
-  - [ ] 3.4 Create file operations command handler for importing video files
-  - [ ] 3.5 Implement application data directory setup and cleanup functions
-  - [ ] 3.6 Create Tauri commands for metadata extraction, thumbnail generation, and file import
-  - [ ] 3.7 Add error handling for unsupported formats, file access issues, and FFmpeg failures
-  - [ ] 3.8 Write unit tests for FFmpeg integration and command handlers
+- [x] 3.0 Build video import system with FFmpeg integration
+  - [x] 3.1 Set up Rust command infrastructure in src-tauri/src/commands/mod.rs
+  - [x] 3.2 Implement FFmpeg probe module for video metadata extraction (duration, resolution, fps, codec)
+  - [x] 3.3 Implement FFmpeg thumbnail generation module (extract frame at 1-second mark)
+  - [x] 3.4 Create file operations command handler for importing video files
+  - [x] 3.5 Implement application data directory setup and cleanup functions
+  - [x] 3.6 Create Tauri commands for metadata extraction, thumbnail generation, and file import
+  - [x] 3.7 Add error handling for unsupported formats, file access issues, and FFmpeg failures
+  - [x] 3.8 Write unit tests for FFmpeg integration and command handlers
 
 - [ ] 4.0 Create media library interface with drag-and-drop
   - [ ] 4.1 Create MediaLibrary component with grid layout and empty state
