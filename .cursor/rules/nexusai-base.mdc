@@ -1,0 +1,222 @@
+---
+Description: Core rules and patterns for NexusAI iOS messaging app development
+Globs: **/*.swift
+---
+
+# NexusAI Development Rules
+
+## Project Overview
+NexusAI is a real-time messaging app for remote teams built with Swift + SwiftUI + Firebase. The goal is a production-quality MVP in 24 hours, focusing on reliability over features.
+
+## Architecture Mandates
+
+### MVVM Strict Separation
+- **Views** (SwiftUI): Pure presentation, no business logic, no Firebase calls
+- **ViewModels**: Business logic, state management, coordinate services
+- **Services**: Firebase operations, data persistence, network logic
+- **Models**: Data structures only, Codable + Identifiable
+
+### Key Patterns to Follow
+1. **Optimistic UI**: Messages appear instantly, sync in background
+2. **Offline-First**: Queue messages when offline, flush on reconnect
+3. **Real-Time Sync**: Use Firestore snapshot listeners, not polling
+4. **Singleton Services**: Only for global state (Firebase, Presence, Notifications)
+
+## Coding Standards
+
+### Swift Concurrency
+- Use `async/await` for all async operations
+- Avoid completion handlers (legacy pattern)
+- Use `Task { }` in ViewModels for async work
+- Always handle errors with `do-catch` or `try?`
+
+### SwiftUI Best Practices
+- Use `@StateObject` for ViewModel initialization
+- Use `@ObservedObject` for passed ViewModels
+- Use `@State` for local UI state only
+- Clean up listeners in `.onDisappear` or `deinit`
+
+### Firebase Integration
+- Always enable offline persistence: `settings.isPersistenceEnabled = true`
+- Use `@DocumentID` for Firestore document IDs
+- Detach snapshot listeners when views disappear
+- Handle auth state changes reactively
+
+### Naming Conventions
+- ViewModels: `[Feature]ViewModel` (e.g., `ChatViewModel`)
+- Services: `[Domain]Service` (e.g., `MessageService`)
+- Views: `[Feature]View` (e.g., `ChatView`)
+- Models: Clear nouns (e.g., `Message`, `Conversation`)
+
+## Critical Implementation Details
+
+### Message Sending Flow
+```swift
+// 1. Optimistic UI: Add message immediately
+let tempMessage = Message(localId: UUID().uuidString, status: .sending, ...)
+messages.append(tempMessage)
+
+// 2. Send to Firebase
+Task {
+    do {
+        let realId = try await messageService.sendMessage(tempMessage)
+        updateLocalMessage(localId: tempMessage.localId, withId: realId, status: .sent)
+    } catch {
+        updateLocalMessage(localId: tempMessage.localId, status: .failed)
+    }
+}
+```
+
+### Real-Time Listeners
+```swift
+// Always store listener for cleanup
+private var listener: ListenerRegistration?
+
+func startListening() {
+    listener = db.collection("messages")
+        .addSnapshotListener { [weak self] snapshot, error in
+            // Handle updates
+        }
+}
+
+deinit {
+    listener?.remove()
+}
+```
+
+### Offline Queue Pattern
+```swift
+// Check network before sending
+if NetworkMonitor.shared.isConnected {
+    try await sendToFirestore(message)
+} else {
+    await messageQueue.enqueue(message)
+}
+```
+
+## What NOT to Do
+
+❌ **Don't call Firebase directly from Views**
+❌ **Don't use completion handlers (use async/await)**
+❌ **Don't forget to detach Firestore listeners**
+❌ **Don't skip error handling**
+❌ **Don't make all services singletons (only global state)**
+❌ **Don't poll for updates (use real-time listeners)**
+❌ **Don't forget optimistic UI for messages**
+
+## File Organization
+
+```
+NexusAI/
+├── Models/          # Codable structs, enums only
+├── ViewModels/      # ObservableObject classes
+├── Views/           # SwiftUI views
+│   ├── Auth/
+│   ├── Chat/
+│   ├── ConversationList/
+│   ├── Group/
+│   └── Components/  # Reusable UI components
+├── Services/        # Business logic, Firebase
+└── Utilities/       # Extensions, helpers, constants
+```
+
+## Testing Requirements
+
+### Must Test
+- Service layer with mock Firestore
+- ViewModel state changes
+- Real-time message delivery (2 simulators)
+- Offline message queue
+- App lifecycle (background/foreground/force quit)
+
+### Testing Scenarios
+1. Send message from User A → appears on User B instantly
+2. User A offline → send message → reconnect → message delivers
+3. Send 20+ rapid messages → all deliver in order
+4. App force quit → reopen → messages persist
+
+## Error Handling Strategy
+
+### Service Layer
+```swift
+enum MessageError: LocalizedError {
+    case networkFailure
+    case unauthorized
+    case invalidData
+    
+    var errorDescription: String? { /* ... */ }
+}
+```
+
+### ViewModel Layer
+```swift
+@Published var error: Error?
+
+func sendMessage() {
+    Task {
+        do {
+            try await messageService.sendMessage(...)
+        } catch {
+            self.error = error
+        }
+    }
+}
+```
+
+### View Layer
+```swift
+.alert(item: $viewModel.error) { error in
+    Alert(title: Text("Error"), 
+          message: Text(error.localizedDescription),
+          primaryButton: .default(Text("Retry"), action: viewModel.retry),
+          secondaryButton: .cancel())
+}
+```
+
+## Performance Considerations
+
+- Load 50 messages initially, paginate on scroll
+- Debounce typing indicators (500ms delay)
+- Cache Firestore queries automatically
+- Use lazy loading for participants
+- Detach listeners when views disappear
+
+## Security Reminders
+
+- Firestore rules: Users access only conversations they're part of
+- Never store sensitive data in models
+- Validate participant access server-side
+- FCM tokens must be secured
+
+## MVP Focus
+
+**Ship Fast, Ship Solid:**
+- Function over form (basic UI is OK)
+- Reliability over features (no message loss)
+- Critical path over nice-to-haves
+- Test edge cases (offline, app lifecycle, poor network)
+
+**Critical Path PRs:**
+1-8 (Setup through Real-Time Sync), 10 (Read Receipts), 12 (Group Chat), 13 (Notifications), 15 (Offline Support)
+
+**Optional PRs:**
+9 (Typing Indicators), 11 (Presence), 14 (Docs), 16-17 (Polish)
+
+## Quick Reference
+
+- **PRD:** `../PRD.md` - Full requirements and schema
+- **Architecture:** `../architecture.md` - System diagram
+- **Build Phases:** `../building-phases.md` - PR breakdown
+- **Memory Bank:** `../memory-bank/` - Project context and patterns
+
+## When in Doubt
+
+1. Check `systemPatterns.md` for architectural guidance
+2. Check `techContext.md` for technical decisions
+3. Check `PRD.md` for requirements
+4. Ask before deviating from MVVM or established patterns
+5. Test on simulator, verify real-time sync works
+
+---
+
+**Remember:** Messages must never get lost. Optimistic UI + offline queue + real-time sync = rock-solid messaging foundation.
