@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# FFmpeg binaries (large files, downloaded separately)
+src-tauri/bin/ffmpeg-*
+src-tauri/bin/*.zip

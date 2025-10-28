@@ -1,0 +1,314 @@
+---
+description: ClipForge project-specific development rules and patterns
+globs: src/**/*.{ts,tsx,rs}, src-tauri/**/*.rs, tasks/**/*.md, memory-bank/**/*.md
+---
+
+# ClipForge Development Rules
+
+## Project Overview
+
+ClipForge is a desktop video editor built with Tauri 2.0 + React + TypeScript + Zustand. This rule defines the project's architecture patterns, coding standards, and development workflow.
+
+## Architecture Patterns
+
+### Frontend Architecture
+- **Framework**: React 18 with TypeScript
+- **State Management**: Zustand stores (mediaStore, timelineStore, exportStore)
+- **Build Tool**: Vite
+- **Styling**: Plain CSS with CSS variables (no complex frameworks for MVP)
+
+### Backend Architecture
+- **Framework**: Tauri 2.0 with Rust backend
+- **Media Processing**: FFmpeg bundled as sidecar
+- **IPC**: Tauri commands for frontend-backend communication
+- **File Operations**: Tauri file system APIs
+
+### Component Organization
+```
+src/
+├── components/
+│   ├── MediaLibrary/    # Import and clip management
+│   ├── Timeline/        # Timeline editor components
+│   ├── Preview/         # Video player and controls
+│   ├── Export/          # Export dialog and progress
+│   └── Layout/          # App layout and structure
+├── stores/              # Zustand state management
+├── hooks/               # Custom React hooks
+├── utils/               # Helper functions
+└── types/               # TypeScript interfaces
+```
+
+## Coding Standards
+
+### TypeScript Standards
+- **Strict Mode**: Always enabled
+- **Types**: Explicit types, avoid `any`
+- **Interfaces**: Define in `src/types/index.ts`
+- **Components**: Functional components with hooks
+- **Props**: Interface at top of component file
+
+### React Patterns
+- **Components**: One component per file
+- **Hooks**: Custom hooks for complex logic
+- **State**: Use Zustand stores, not local state for shared data
+- **Performance**: Use `React.memo` for expensive components
+- **Event Handlers**: Use `useCallback` for event handlers passed to children
+
+### Rust Patterns
+- **Commands**: All Tauri commands must be async
+- **Error Handling**: Use `Result<T, String>` for all commands
+- **FFmpeg**: Always use sidecar pattern, never system FFmpeg
+- **File Paths**: Use Tauri path APIs, not hardcoded paths
+- **Cleanup**: Always clean up temporary files
+
+### Zustand Store Patterns
+```typescript
+// Store structure
+interface StoreName {
+  // State
+  items: Item[];
+  loading: boolean;
+  error: string | null;
+  
+  // Actions
+  addItem: (item: Item) => void;
+  removeItem: (id: string) => void;
+  setLoading: (loading: boolean) => void;
+  
+  // Computed values
+  getItemById: (id: string) => Item | undefined;
+}
+```
+
+## FFmpeg Integration Rules
+
+### Sidecar Configuration
+- **Binaries**: Must be in `src-tauri/bin/` with correct naming
+- **Architectures**: Support both Intel (`ffmpeg-x86_64-apple-darwin`) and Apple Silicon (`ffmpeg-aarch64-apple-darwin`)
+- **Permissions**: Configure in `capabilities/default.json`
+- **Testing**: Always test FFmpeg availability on app startup
+
+### FFmpeg Commands
+```rust
+// Standard pattern for FFmpeg commands
+let sidecar = app.shell().sidecar("ffmpeg")?;
+let output = sidecar
+    .args(&["-i", &input_path, ...])
+    .output()
+    .await?;
+```
+
+## State Management Rules
+
+### Store Separation
+- **mediaStore**: Source of truth for imported clips
+- **timelineStore**: Timeline composition and playback state
+- **exportStore**: Export progress and status
+- **No Cross-Store Dependencies**: Stores should not import each other
+
+### State Updates
+- **Actions**: Return void, update state directly
+- **Immutability**: Always create new objects/arrays
+- **Computed Values**: Use getters for derived state
+- **Selectors**: Use specific selectors to avoid unnecessary re-renders
+
+## UI/UX Standards
+
+### Design Tokens
+```css
+:root {
+  /* Colors */
+  --color-primary: #3B82F6;
+  --color-danger: #EF4444;
+  --color-success: #10B981;
+  --color-background: #1F2937;
+  --color-surface: #374151;
+  --color-text: #F9FAFB;
+  
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+}
+```
+
+### Component Patterns
+- **Layout**: Three-panel layout (Media Library, Video Player, Timeline)
+- **Loading States**: Always show loading indicators for async operations
+- **Error Handling**: Toast notifications for errors, modals for critical errors
+- **Responsive**: Support window resizing
+- **Accessibility**: Proper ARIA labels and keyboard navigation
+
+## File Organization Rules
+
+### Frontend Files
+- **Components**: PascalCase for component files (`VideoPlayer.tsx`)
+- **Hooks**: camelCase starting with `use` (`useVideoPlayback.ts`)
+- **Utils**: camelCase (`timeFormat.ts`)
+- **Types**: PascalCase interfaces (`MediaClip`, `TimelineClip`)
+
+### Backend Files
+- **Modules**: snake_case (`file_ops.rs`)
+- **Functions**: snake_case (`extract_video_metadata`)
+- **Structs**: PascalCase (`VideoMetadata`)
+- **Commands**: snake_case with `#[tauri::command]`
+
+## Performance Guidelines
+
+### Frontend Performance
+- **Timeline Rendering**: Use DOM positioning, consider Canvas if >50 clips
+- **Video Sync**: Use `requestAnimationFrame` for smooth updates
+- **Debouncing**: Debounce timeline scrubbing (50ms)
+- **Memoization**: Use `React.memo` for timeline clips and media cards
+
+### Backend Performance
+- **FFmpeg**: Use `-c copy` for concatenation (no re-encoding)
+- **Streaming**: Stream FFmpeg output, don't load into memory
+- **Concurrency**: Process thumbnails in parallel
+- **Cleanup**: Always clean up temporary files
+
+## Error Handling Standards
+
+### Frontend Errors
+- **Toast Notifications**: Non-critical errors (import failures, export errors)
+- **Modal Dialogs**: Critical errors requiring user action
+- **Console Logging**: Detailed errors for debugging
+- **Graceful Degradation**: App should remain functional after errors
+
+### Backend Errors
+- **Structured Errors**: Use `Result<T, String>` with descriptive messages
+- **FFmpeg Errors**: Parse and provide user-friendly error messages
+- **File Errors**: Handle permission and access errors gracefully
+- **Resource Cleanup**: Always clean up on error
+
+## Testing Standards
+
+### Frontend Testing
+- **Unit Tests**: Test stores and utility functions
+- **Component Tests**: Test component behavior and user interactions
+- **Integration Tests**: Test complete workflows (import → edit → export)
+- **File Location**: Place tests alongside source files (`Component.test.tsx`)
+
+### Backend Testing
+- **Unit Tests**: Test FFmpeg integration and command handlers
+- **Integration Tests**: Test complete export workflows
+- **Error Tests**: Test error handling paths
+- **File Location**: Place tests in `#[cfg(test)]` modules
+
+## Development Workflow
+
+### Git Standards
+- **Commits**: Use conventional commit format (`feat:`, `fix:`, `chore:`)
+- **Branches**: Feature branches for new work
+- **PRs**: Required for all changes
+- **Tags**: Use semantic versioning (`v0.1.0-mvp`)
+
+### Build Process
+- **Development**: `npm run tauri dev`
+- **Production**: `npm run tauri build`
+- **Testing**: Run tests before commits
+- **Linting**: Use ESLint for TypeScript, Clippy for Rust
+
+## MVP Scope Boundaries
+
+### In Scope (MVP)
+- Video import (drag-and-drop, file picker)
+- Timeline editing (drag, trim, reorder)
+- Video preview with timeline sync
+- Basic export (MP4 concatenation)
+- Two-track timeline
+- Basic keyboard shortcuts
+
+### Out of Scope (MVP)
+- Recording features (screen, webcam)
+- Advanced editing (effects, transitions)
+- Multiple video tracks (>2)
+- Project save/load
+- Undo/redo
+- Advanced export options
+
+## Memory Bank Integration
+
+### Documentation Updates
+- **activeContext.md**: Update with current work focus
+- **progress.md**: Update with implementation status
+- **systemPatterns.md**: Update when patterns evolve
+- **techContext.md**: Update when tools change
+
+### Rule Updates
+- **Add Rules**: Document new patterns as they emerge
+- **Update Rules**: Refine rules based on experience
+- **Reference Rules**: Use `@file` syntax to reference other rules
+
+## Common Patterns
+
+### Video Sync Pattern
+```typescript
+// Sync video with timeline playhead
+useEffect(() => {
+  const activeClip = getActiveClipAtTime(playhead);
+  if (activeClip) {
+    videoRef.current.src = activeClip.filepath;
+    const clipTime = playhead - activeClip.startTime + activeClip.trimStart;
+    videoRef.current.currentTime = clipTime;
+  }
+}, [playhead]);
+```
+
+### Timeline Rendering Pattern
+```typescript
+// Convert time to pixels for timeline positioning
+const pixelsPerSecond = BASE_PPS * zoom;
+const clipX = clip.startTime * pixelsPerSecond;
+const clipWidth = clip.duration * pixelsPerSecond;
+```
+
+### FFmpeg Export Pattern
+```rust
+// Simple concatenation export
+let concat_content = clips.iter()
+    .map(|c| format!("file '{}'", c.filepath))
+    .collect::<Vec<_>>()
+    .join("\n");
+```
+
+## Quality Checklist
+
+Before considering any feature complete:
+- [ ] Works in development mode
+- [ ] Works in packaged .dmg
+- [ ] No console errors
+- [ ] Basic error handling implemented
+- [ ] User can complete workflow without crashes
+- [ ] Code is clean and organized
+- [ ] Tests pass (if applicable)
+- [ ] Performance meets requirements
+- [ ] Memory bank updated (if significant changes)
+
+## Emergency Procedures
+
+### If FFmpeg Integration Fails
+1. Verify binary naming and permissions
+2. Check `capabilities/default.json` configuration
+3. Test FFmpeg manually in terminal
+4. Fall back to system FFmpeg (not recommended)
+
+### If Timeline Performance Issues
+1. Profile with Chrome DevTools
+2. Implement `React.memo` for expensive components
+3. Consider Canvas rendering for >50 clips
+4. Debounce drag operations
+
+### If Export Fails
+1. Check FFmpeg stderr for actual error
+2. Verify concat file generation
+3. Ensure output path is writable
+4. Test with simple single-clip export
+
+---
+
+**Rule Version**: 1.0  
+**Last Updated**: Project Initialization  
+**Status**: Active Development

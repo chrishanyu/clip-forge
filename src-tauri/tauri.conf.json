@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "clip-forge",
+  "productName": "ClipForge",
   "version": "0.1.0",
-  "identifier": "com.hanyu.clip-forge",
+  "identifier": "com.clipforge.app",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -12,24 +12,46 @@
   "app": {
     "windows": [
       {
-        "title": "clip-forge",
-        "width": 800,
-        "height": 600
+        "title": "ClipForge",
+        "width": 1400,
+        "height": 1000,
+        "minWidth": 1200,
+        "minHeight": 800,
+        "resizable": true,
+        "center": true
       }
     ],
     "security": {
       "csp": null
-    }
+    },
+    "macOSPrivateApi": true
   },
   "bundle": {
     "active": true,
-    "targets": "all",
+    "targets": ["dmg"],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "category": "public.app-category.video",
+    "shortDescription": "Desktop Video Editor",
+    "longDescription": "Record, edit, and export videos with ClipForge"
+  },
+  "plugins": {
+    "shell": {
+      "all": true,
+      "scope": [
+        {
+          "name": "bin/ffmpeg",
+          "sidecar": true
+        }
+      ]
+    },
+    "dialog": {
+      "all": true
+    }
   }
 }
