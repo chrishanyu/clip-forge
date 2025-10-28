@@ -60,13 +60,13 @@
   - [x] 1.7 Configure TypeScript with strict mode and path aliases
   - [x] 1.8 Test basic app launch with `npm run tauri dev`
 
-- [ ] 2.0 Implement core data models and state management
-  - [ ] 2.1 Create TypeScript interfaces in src/types/index.ts (MediaClip, TimelineClip, VideoMetadata, ExportSettings, ExportProgress)
-  - [ ] 2.2 Implement mediaStore with Zustand (clips array, loading state, actions for add/remove/get clips)
-  - [ ] 2.3 Implement timelineStore with Zustand (clips, playhead, playing state, zoom, actions for timeline manipulation)
-  - [ ] 2.4 Implement exportStore with Zustand (exporting state, progress tracking, error handling)
-  - [ ] 2.5 Create utility functions for time formatting, file size formatting, and video calculations
-  - [ ] 2.6 Write unit tests for all stores and utility functions
+- [x] 2.0 Implement core data models and state management
+  - [x] 2.1 Create TypeScript interfaces in src/types/index.ts (MediaClip, TimelineClip, VideoMetadata, ExportSettings, ExportProgress)
+  - [x] 2.2 Implement mediaStore with Zustand (clips array, loading state, actions for add/remove/get clips)
+  - [x] 2.3 Implement timelineStore with Zustand (clips, playhead, playing state, zoom, actions for timeline manipulation)
+  - [x] 2.4 Implement exportStore with Zustand (exporting state, progress tracking, error handling)
+  - [x] 2.5 Create utility functions for time formatting, file size formatting, and video calculations
+  - [x] 2.6 Write unit tests for all stores and utility functions
 
 - [ ] 3.0 Build video import system with FFmpeg integration
   - [ ] 3.1 Set up Rust command infrastructure in src-tauri/src/commands/mod.rs
