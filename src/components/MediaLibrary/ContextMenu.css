@@ -1,0 +1,125 @@
+/* ============================================================================
+   CONTEXT MENU STYLES
+   ============================================================================ */
+
+.context-menu {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-lg);
+  min-width: 200px;
+  max-width: 300px;
+  overflow: hidden;
+  animation: contextMenuFadeIn 0.15s ease-out;
+}
+
+@keyframes contextMenuFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.context-menu-content {
+  padding: 0;
+}
+
+.context-menu-header {
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-surface-hover);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.context-menu-title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.context-menu-divider {
+  height: 1px;
+  background: var(--color-border);
+  margin: 0;
+}
+
+.context-menu-items {
+  padding: var(--spacing-xs) 0;
+}
+
+.context-menu-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: none;
+  border: none;
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  gap: var(--spacing-sm);
+}
+
+.context-menu-item:hover {
+  background: var(--color-surface-hover);
+}
+
+.context-menu-item:focus {
+  outline: none;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.context-menu-item-danger {
+  color: var(--color-danger);
+}
+
+.context-menu-item-danger:hover {
+  background: var(--color-danger-light);
+  color: var(--color-danger-dark);
+}
+
+.context-menu-item-danger:focus {
+  background: var(--color-danger-light);
+  color: var(--color-danger-dark);
+}
+
+.context-menu-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.context-menu-item span {
+  flex: 1;
+  white-space: nowrap;
+}
+
+/* ============================================================================
+   RESPONSIVE DESIGN
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .context-menu {
+    min-width: 180px;
+    max-width: 250px;
+  }
+  
+  .context-menu-item {
+    padding: var(--spacing-md) var(--spacing-md);
+  }
+  
+  .context-menu-icon {
+    width: 18px;
+    height: 18px;
+  }
+}

@@ -2,6 +2,15 @@
    CLIP CARD COMPONENT STYLES
    ============================================================================ */
 
+/* CSS Variables for Loading States */
+:root {
+  --color-surface-hover: #4B5563;
+  --color-text-secondary: #9CA3AF;
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+}
+
 .clip-card {
   background-color: var(--color-surface, #374151);
   border-radius: 8px;
@@ -252,4 +261,109 @@
 .clip-card[tabindex="0"]:focus {
   outline: 2px solid var(--color-primary, #3B82F6);
   outline-offset: 2px;
+}
+
+/* ============================================================================
+   LOADING STATE STYLES
+   ============================================================================ */
+
+.clip-card.loading {
+  cursor: default;
+  opacity: 0.9;
+  background-color: var(--color-surface, #374151);
+  border: 1px solid var(--color-border, #4B5563);
+}
+
+.clip-card.loading:hover {
+  transform: none;
+  box-shadow: none;
+  border-color: var(--color-border, #4B5563);
+}
+
+.clip-thumbnail.loading {
+  background-color: var(--color-background, #1F2937);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.loading-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm, 8px);
+  color: var(--color-text-secondary, #9CA3AF);
+}
+
+.loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--color-surface, #374151);
+  border-top: 3px solid var(--color-primary, #3B82F6);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-secondary, #9CA3AF);
+  text-align: center;
+}
+
+.clip-info.loading {
+  opacity: 0.8;
+}
+
+.clip-filename.loading {
+  color: var(--color-text-secondary, #9CA3AF);
+  opacity: 0.9;
+}
+
+.clip-metadata.loading {
+  opacity: 0.7;
+}
+
+.metadata-item.loading {
+  color: var(--color-text-tertiary, #6B7280);
+  font-style: italic;
+  animation: pulse 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.5; }
+  100% { opacity: 0.8; }
+}
+
+.clip-filename.loading {
+  color: var(--color-text-secondary, #9CA3AF);
+}
+
+.metadata-item.loading {
+  color: var(--color-surface, #374151);
+  background-color: var(--color-surface, #374151);
+  border-radius: 2px;
+  padding: 1px 4px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+/* Disable hover effects for loading cards */
+.clip-card.loading .clip-overlay {
+  display: none;
 }

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useMediaStore } from '@/stores/mediaStore';
-import { MediaClip } from '@/types';
+import { useTimelineStore, initializeTimeline } from '@/stores/timelineStore';
+import { useToastStore } from '@/stores/toastStore';
+import { MediaClip, createTimelineClip } from '@/types';
 import { useDragAndDrop, useTauriFileDrop } from '@/hooks';
 import { 
   MediaLibraryHeader, 
@@ -11,6 +13,7 @@ import {
   ErrorState, 
   DragOverlay 
 } from './';
+import ContextMenu from './ContextMenu';
 import './MediaLibrary.css';
 
 // ============================================================================
@@ -24,9 +27,15 @@ interface MediaLibraryProps {
 export type { MediaLibraryProps };
 
 export const MediaLibrary: React.FC<MediaLibraryProps> = ({ className = '' }) => {
-  const { clips, loading, error, importVideo } = useMediaStore();
+  const { clips, loading, error, importVideo, removeClip } = useMediaStore();
+  const { tracks, addClipToTrack } = useTimelineStore();
+  const { showError, showSuccess } = useToastStore();
   const totalClips = clips.length;
-  const [isImporting, setIsImporting] = useState(false);
+  const [selectedClipId, setSelectedClipId] = useState<string | null>(null);
+  const [contextMenu, setContextMenu] = useState<{
+    clip: MediaClip;
+    position: { x: number; y: number };
+  } | null>(null);
   
   // Custom hooks
   const { isDragOver, dragHandlers } = useDragAndDrop();
@@ -37,35 +46,156 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({ className = '' }) =>
   // ============================================================================
   
   const handleClipClick = (clip: MediaClip) => {
-    // TODO: Implement clip selection logic
-    console.log('Clip clicked:', clip.filename);
+    // Select/deselect the clip
+    setSelectedClipId(selectedClipId === clip.id ? null : clip.id);
   };
 
   const handleClipDoubleClick = (clip: MediaClip) => {
-    // TODO: Implement add to timeline logic
-    console.log('Clip double-clicked:', clip.filename);
+    // Add clip to timeline
+    try {
+      // Ensure timeline has tracks initialized
+      if (tracks.length === 0) {
+        initializeTimeline();
+        // Get tracks after initialization
+        const updatedTracks = useTimelineStore.getState().tracks;
+        if (updatedTracks.length === 0) {
+          console.error('Failed to initialize timeline tracks');
+          return;
+        }
+      }
+      
+      // Use the first track for MVP
+      const firstTrack = tracks.length > 0 ? tracks[0] : useTimelineStore.getState().tracks[0];
+      if (!firstTrack) {
+        console.error('No tracks available');
+        return;
+      }
+      
+      // Calculate where to place the clip (at the end of existing clips on the track)
+      const trackClips = firstTrack.clips;
+      const lastClipEnd = trackClips.length > 0 
+        ? Math.max(...trackClips.map(c => c.startTime + c.duration))
+        : 0;
+      
+      // Create timeline clip
+      const timelineClip = createTimelineClip(
+        clip.id,
+        firstTrack.id,
+        lastClipEnd, // Start time
+        clip.metadata.duration, // Duration
+        0, // trimStart
+        clip.metadata.duration // trimEnd
+      );
+      
+      // Add to timeline
+      addClipToTrack(timelineClip, firstTrack.id);
+      
+      console.log(`Added ${clip.filename} to timeline at ${lastClipEnd}s`);
+    } catch (error) {
+      console.error('Failed to add clip to timeline:', error);
+    }
   };
 
-  const handleClipRightClick = (clip: MediaClip, _event: React.MouseEvent) => {
-    // TODO: Implement context menu logic
-    console.log('Clip right-clicked:', clip.filename);
+  const handleClipRightClick = (clip: MediaClip, event: React.MouseEvent) => {
+    event.preventDefault();
+    
+    // Calculate position for context menu
+    const position = {
+      x: event.clientX,
+      y: event.clientY,
+    };
+    
+    // Show context menu
+    setContextMenu({ clip, position });
+    
+    // Clear selection when showing context menu
+    setSelectedClipId(null);
   };
 
   const handleFileDrop = async (filePaths: string[]) => {
-    setIsImporting(true);
     try {
       for (const filePath of filePaths) {
         try {
           console.log('Importing file:', filePath);
+          
+          // Create a temporary clip with loading state
+          const tempClip: MediaClip = {
+            id: `temp-${Date.now()}-${Math.random()}`,
+            filepath: filePath,
+            filename: filePath.split('/').pop() || 'Unknown',
+            metadata: {
+              duration: 0,
+              width: 0,
+              height: 0,
+              fps: 0,
+              codec: 'Unknown',
+              container: 'Unknown',
+              fileSize: 0,
+              thumbnailPath: '',
+              filepath: filePath,
+              filename: filePath.split('/').pop() || 'Unknown',
+              createdAt: new Date().toISOString(),
+            },
+            createdAt: new Date().toISOString(),
+            isLoading: true,
+          };
+          
+          // Add temporary clip to show loading state
+          useMediaStore.getState().addClip(tempClip);
+          
+          // Import the actual video
           await importVideo(filePath);
+          
+          // Remove the temporary clip (the real one will be added by importVideo)
+          useMediaStore.getState().removeClip(tempClip.id);
+          
+          // Show success message
+          const filename = filePath.split('/').pop() || 'Unknown file';
+          showSuccess('Import Successful', `"${filename}" imported successfully`);
+          
         } catch (error) {
           console.error(`Failed to import ${filePath}:`, error);
-          // Continue with other files even if one fails
+          // Remove any temporary clips that failed
+          const tempClips = clips.filter(clip => clip.id.startsWith('temp-'));
+          tempClips.forEach(clip => useMediaStore.getState().removeClip(clip.id));
+          
+          // Show user-friendly error message
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          const filename = filePath.split('/').pop() || 'Unknown file';
+          
+          showError(
+            'Import Failed',
+            `Failed to import "${filename}": ${errorMessage}`
+          );
         }
       }
-    } finally {
-      setIsImporting(false);
+    } catch (error) {
+      console.error('Error in handleFileDrop:', error);
     }
+  };
+
+  // ============================================================================
+  // CONTEXT MENU HANDLERS
+  // ============================================================================
+
+  const handleContextMenuClose = () => {
+    setContextMenu(null);
+  };
+
+  const handleContextMenuDelete = (clip: MediaClip) => {
+    try {
+      removeClip(clip.id);
+      setContextMenu(null);
+      showSuccess('Clip Deleted', `"${clip.filename}" removed from library`);
+    } catch (error) {
+      console.error('Failed to delete clip:', error);
+      showError('Delete Failed', `Failed to remove "${clip.filename}"`);
+    }
+  };
+
+  const handleContextMenuAddToTimeline = (clip: MediaClip) => {
+    // Reuse the double-click logic
+    handleClipDoubleClick(clip);
   };
 
   // ============================================================================
@@ -89,12 +219,14 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({ className = '' }) =>
       <MediaLibraryHeader totalClips={totalClips} />
       
       <MediaLibraryContent>
-        {(loading || isImporting) && <LoadingState />}
-        {error && !loading && !isImporting && <ErrorState error={error} />}
-        {!loading && !isImporting && !error && totalClips === 0 && <EmptyState />}
-        {!loading && !isImporting && !error && totalClips > 0 && (
+        {/* Show global loading state only for general loading, not per-clip loading */}
+        {loading && <LoadingState />}
+        {error && !loading && <ErrorState error={error} />}
+        {!loading && !error && totalClips === 0 && <EmptyState />}
+        {!loading && !error && totalClips > 0 && (
           <MediaLibraryGrid 
             clips={clips}
+            selectedClipId={selectedClipId}
             onClipClick={handleClipClick}
             onClipDoubleClick={handleClipDoubleClick}
             onClipRightClick={handleClipRightClick}
@@ -103,6 +235,17 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({ className = '' }) =>
         
         {isDragOver && <DragOverlay />}
       </MediaLibraryContent>
+      
+      {/* Context Menu */}
+      {contextMenu && (
+        <ContextMenu
+          clip={contextMenu.clip}
+          position={contextMenu.position}
+          onClose={handleContextMenuClose}
+          onDelete={handleContextMenuDelete}
+          onAddToTimeline={handleContextMenuAddToTimeline}
+        />
+      )}
     </div>
   );
 };

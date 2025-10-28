@@ -1,19 +1,19 @@
 # Active Context
 
-**Last Updated**: December 2024 - Task 4.4 Complete
-**Current Phase**: Media Library Interface Implementation - Drag-and-Drop Complete
-**Focus**: Media Library Interactions and Testing
+**Last Updated**: December 2024 - Task 4.5 Complete
+**Current Phase**: Media Library Interface Implementation - Click Handlers Complete
+**Focus**: Media Library Context Menus and Error Handling
 
 ## Current Work Status
 
 ### What We're Doing Now
 **COMPLETED**: Video import system with FFmpeg integration (metadata extraction, thumbnail generation, file operations)
 **COMPLETED**: Media library interface with drag-and-drop functionality
-**NEXT**: Adding media library interactions (click handlers, context menus, loading states)
+**COMPLETED**: Media library click handlers for selection and timeline addition
+**NEXT**: Adding context menus, loading states, and error handling
 
 ### Immediate Next Steps
-1. **Media Library Interactions** (Priority: HIGH)
-   - Add click handlers for clip selection and double-click to add to timeline
+1. **Media Library Context Menus** (Priority: HIGH)
    - Implement right-click context menu for clip deletion
    - Add loading indicators during import and thumbnail generation
    - Handle error states with toast notifications for import failures
@@ -24,8 +24,11 @@
    - Test error handling scenarios
 
 ## Recent Changes
+- ✅ **Task 4.5 Complete**: Click handlers for clip selection and double-click to add to timeline
+- ✅ **Media Store Fix**: Fixed computed values to be properties instead of getter methods
+- ✅ **Timeline Integration**: Media clips can now be added to timeline via double-click
+- ✅ **Clip Selection**: Visual selection state implemented in ClipCard component
 - ✅ **Task 4.4 Complete**: Drag-and-drop functionality for importing files
-- ✅ **Media Library UI**: Complete MediaLibrary component with drag-and-drop support
 - ✅ **Task 3.0 Complete**: Video import system with FFmpeg integration
 - ✅ **Rust Command Infrastructure**: Complete command module structure in `src-tauri/src/commands/`
 - ✅ **FFmpeg Integration**: Metadata extraction and thumbnail generation modules implemented

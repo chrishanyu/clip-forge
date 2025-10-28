@@ -8,6 +8,7 @@ import { ClipCard } from './ClipCard';
 
 interface MediaLibraryGridProps {
   clips: MediaClip[];
+  selectedClipId?: string | null;
   onClipClick?: (clip: MediaClip) => void;
   onClipDoubleClick?: (clip: MediaClip) => void;
   onClipRightClick?: (clip: MediaClip, event: React.MouseEvent) => void;
@@ -15,6 +16,7 @@ interface MediaLibraryGridProps {
 
 export const MediaLibraryGrid: React.FC<MediaLibraryGridProps> = ({
   clips,
+  selectedClipId,
   onClipClick,
   onClipDoubleClick,
   onClipRightClick,
@@ -25,6 +27,7 @@ export const MediaLibraryGrid: React.FC<MediaLibraryGridProps> = ({
         <ClipCard
           key={clip.id}
           clip={clip}
+          isSelected={selectedClipId === clip.id}
           onClick={onClipClick}
           onDoubleClick={onClipDoubleClick}
           onRightClick={onClipRightClick}

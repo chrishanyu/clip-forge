@@ -2,6 +2,23 @@
    MEDIA LIBRARY COMPONENT STYLES
    ============================================================================ */
 
+/* CSS Variables for Context Menu */
+:root {
+  --color-surface-hover: #4B5563;
+  --color-border: #4B5563;
+  --color-text-secondary: #9CA3AF;
+  --color-primary-light: rgba(59, 130, 246, 0.1);
+  --color-danger-light: rgba(239, 68, 68, 0.1);
+  --color-danger-dark: #DC2626;
+  --border-radius-md: 8px;
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --font-size-sm: 14px;
+  --font-weight-medium: 500;
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+}
+
 .media-library {
   display: flex;
   flex-direction: column;
@@ -121,11 +138,16 @@
   padding: var(--spacing-xl, 32px);
 }
 
-.loading-spinner {
-  margin-bottom: var(--spacing-md, 16px);
+.loading-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm, 8px);
+  color: var(--color-text-secondary, #9CA3AF);
 }
 
-.spinner {
+.loading-spinner {
   width: 32px;
   height: 32px;
   border: 3px solid var(--color-surface, #374151);
@@ -140,9 +162,10 @@
 }
 
 .loading-text {
-  font-size: 14px;
+  font-size: 12px;
+  font-weight: 500;
   color: var(--color-text-secondary, #9CA3AF);
-  margin: 0;
+  text-align: center;
 }
 
 /* ============================================================================

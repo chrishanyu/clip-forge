@@ -13,12 +13,18 @@ interface MediaStore {
   loading: boolean;
   error: AppError | null;
   
+  // Computed values (as properties)
+  totalClips: number;
+  totalDuration: number;
+  totalFileSize: number;
+  
   // Actions
   addClip: (clip: MediaClip) => void;
   removeClip: (clipId: string) => void;
   updateClip: (clipId: string, updates: Partial<MediaClip>) => void;
   clearClips: () => void;
   importVideo: (filePath: string) => Promise<void>;
+  setClipLoading: (clipId: string, isLoading: boolean) => void;
   
   // Getters
   getClipById: (clipId: string) => MediaClip | undefined;
@@ -27,12 +33,23 @@ interface MediaStore {
   // Loading states
   setLoading: (loading: boolean) => void;
   setError: (error: AppError | null) => void;
-  
-  // Computed values (getters)
-  getTotalClips: () => number;
-  getTotalDuration: () => number;
-  getTotalFileSize: () => number;
 }
+
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+const calculateTotalClips = (clips: MediaClip[]): number => {
+  return clips.length;
+};
+
+const calculateTotalDuration = (clips: MediaClip[]): number => {
+  return clips.reduce((total, clip) => total + clip.metadata.duration, 0);
+};
+
+const calculateTotalFileSize = (clips: MediaClip[]): number => {
+  return clips.reduce((total, clip) => total + clip.metadata.fileSize, 0);
+};
 
 // ============================================================================
 // MEDIA STORE IMPLEMENTATION
@@ -45,14 +62,23 @@ export const useMediaStore = create<MediaStore>()(
       clips: [],
       loading: false,
       error: null,
+      totalClips: 0,
+      totalDuration: 0,
+      totalFileSize: 0,
       
       // Actions
       addClip: (clip: MediaClip) => {
         set(
-          (state) => ({
-            clips: [...state.clips, clip],
-            error: null, // Clear any previous errors
-          }),
+          (state) => {
+            const newClips = [...state.clips, clip];
+            return {
+              clips: newClips,
+              totalClips: calculateTotalClips(newClips),
+              totalDuration: calculateTotalDuration(newClips),
+              totalFileSize: calculateTotalFileSize(newClips),
+              error: null, // Clear any previous errors
+            };
+          },
           false,
           'mediaStore/addClip'
         );
@@ -60,9 +86,15 @@ export const useMediaStore = create<MediaStore>()(
       
       removeClip: (clipId: string) => {
         set(
-          (state) => ({
-            clips: state.clips.filter((clip) => clip.id !== clipId),
-          }),
+          (state) => {
+            const newClips = state.clips.filter((clip) => clip.id !== clipId);
+            return {
+              clips: newClips,
+              totalClips: calculateTotalClips(newClips),
+              totalDuration: calculateTotalDuration(newClips),
+              totalFileSize: calculateTotalFileSize(newClips),
+            };
+          },
           false,
           'mediaStore/removeClip'
         );
@@ -70,11 +102,17 @@ export const useMediaStore = create<MediaStore>()(
       
       updateClip: (clipId: string, updates: Partial<MediaClip>) => {
         set(
-          (state) => ({
-            clips: state.clips.map((clip) =>
+          (state) => {
+            const newClips = state.clips.map((clip) =>
               clip.id === clipId ? { ...clip, ...updates } : clip
-            ),
-          }),
+            );
+            return {
+              clips: newClips,
+              totalClips: calculateTotalClips(newClips),
+              totalDuration: calculateTotalDuration(newClips),
+              totalFileSize: calculateTotalFileSize(newClips),
+            };
+          },
           false,
           'mediaStore/updateClip'
         );
@@ -84,6 +122,9 @@ export const useMediaStore = create<MediaStore>()(
         set(
           {
             clips: [],
+            totalClips: 0,
+            totalDuration: 0,
+            totalFileSize: 0,
             error: null,
           },
           false,
@@ -95,8 +136,10 @@ export const useMediaStore = create<MediaStore>()(
         try {
           set({ loading: true, error: null }, false, 'mediaStore/importVideo/start');
           
-          // Check if file is already imported
-          const existingClip = get().clips.find(clip => clip.filepath === filePath);
+          // Check if file is already imported (ignore temporary clips)
+          const existingClip = get().clips.find(clip => 
+            clip.filepath === filePath && !clip.id.startsWith('temp-')
+          );
           if (existingClip) {
             throw new Error('File is already imported');
           }
@@ -146,20 +189,16 @@ export const useMediaStore = create<MediaStore>()(
         set({ error }, false, 'mediaStore/setError');
       },
       
-      // Computed value getters
-      getTotalClips: () => {
-        const state = get();
-        return state.clips.length;
-      },
-      
-      getTotalDuration: () => {
-        const state = get();
-        return state.clips.reduce((total, clip) => total + clip.metadata.duration, 0);
-      },
-      
-      getTotalFileSize: () => {
-        const state = get();
-        return state.clips.reduce((total, clip) => total + clip.metadata.fileSize, 0);
+      setClipLoading: (clipId: string, isLoading: boolean) => {
+        set(
+          (state) => ({
+            clips: state.clips.map((clip) =>
+              clip.id === clipId ? { ...clip, isLoading } : clip
+            ),
+          }),
+          false,
+          'mediaStore/setClipLoading'
+        );
       },
     }),
     {
@@ -201,9 +240,9 @@ export const useClipById = (clipId: string) =>
  */
 export const useMediaStats = () =>
   useMediaStore((state) => ({
-    totalClips: state.clips.length,
-    totalDuration: state.clips.reduce((total, clip) => total + clip.metadata.duration, 0),
-    totalFileSize: state.clips.reduce((total, clip) => total + clip.metadata.fileSize, 0),
+    totalClips: state.totalClips,
+    totalDuration: state.totalDuration,
+    totalFileSize: state.totalFileSize,
   }));
 
 // ============================================================================

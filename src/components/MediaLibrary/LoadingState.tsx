@@ -7,10 +7,10 @@ import React from 'react';
 export const LoadingState: React.FC = () => {
   return (
     <div className="media-library-loading">
-      <div className="loading-spinner">
-        <div className="spinner"></div>
+      <div className="loading-placeholder">
+        <div className="loading-spinner" />
+        <span className="loading-text">Importing videos...</span>
       </div>
-      <p className="loading-text">Importing videos...</p>
     </div>
   );
 };

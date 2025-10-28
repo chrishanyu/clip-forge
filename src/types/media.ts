@@ -11,6 +11,7 @@ export interface MediaClip {
   filename: string;              // Just the filename (e.g., "vacation.mp4")
   metadata: VideoMetadata;       // Video properties
   createdAt: string;            // ISO timestamp when imported
+  isLoading?: boolean;           // Whether this clip is currently being processed
 }
 
 /**

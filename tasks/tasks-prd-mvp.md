@@ -83,10 +83,10 @@
   - [x] 4.2 Implement ImportButton component with native file dialog integration
   - [x] 4.3 Create ClipCard component displaying thumbnails, metadata, and hover effects
   - [x] 4.4 Implement drag-and-drop functionality for importing files
-  - [ ] 4.5 Add click handlers for clip selection and double-click to add to timeline
-  - [ ] 4.6 Implement right-click context menu for clip deletion
-  - [ ] 4.7 Add loading indicators during import and thumbnail generation
-  - [ ] 4.8 Handle error states with toast notifications for import failures
+  - [x] 4.5 Add click handlers for clip selection and double-click to add to timeline
+  - [x] 4.6 Implement right-click context menu for clip deletion
+  - [x] 4.7 Add loading indicators during import and thumbnail generation
+  - [x] 4.8 Handle error states with toast notifications for import failures
   - [ ] 4.9 Write component tests for MediaLibrary, ImportButton, and ClipCard
 
 - [ ] 5.0 Develop video preview player with timeline sync

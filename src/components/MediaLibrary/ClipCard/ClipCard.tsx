@@ -74,6 +74,45 @@ export const ClipCard: React.FC<ClipCardProps> = ({
   // RENDER
   // ============================================================================
   
+  // Show loading state if clip is loading
+  if (clip.isLoading) {
+    return (
+      <div
+        className={`clip-card loading ${className}`}
+        role="button"
+        tabIndex={-1}
+        aria-label={`Loading video clip: ${clip.filename}`}
+      >
+        {/* Loading Thumbnail Section */}
+        <div className="clip-thumbnail loading">
+          <div className="loading-placeholder">
+            <div className="loading-spinner" />
+            <span className="loading-text">Processing...</span>
+          </div>
+        </div>
+        
+        {/* Loading Info Section */}
+        <div className="clip-info loading">
+          <h4 className="clip-filename loading" title={clip.filename}>
+            {clip.filename}
+          </h4>
+          
+          <div className="clip-metadata loading">
+            <div className="metadata-row">
+              <span className="metadata-item loading">Loading...</span>
+              <span className="metadata-item loading">Loading...</span>
+            </div>
+            
+            <div className="metadata-row">
+              <span className="metadata-item loading">Loading...</span>
+              <span className="metadata-item loading">Loading...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
   return (
     <div
       className={`clip-card ${isSelected ? 'selected' : ''} ${className}`}
