@@ -18,7 +18,8 @@
         "minWidth": 1200,
         "minHeight": 800,
         "resizable": true,
-        "center": true
+        "center": true,
+        "dragDropEnabled": true
       }
     ],
     "security": {
@@ -38,20 +39,14 @@
     ],
     "category": "public.app-category.video",
     "shortDescription": "Desktop Video Editor",
-    "longDescription": "Record, edit, and export videos with ClipForge"
+    "longDescription": "Record, edit, and export videos with ClipForge",
+    "externalBin": [
+      "bin/ffmpeg"
+    ]
   },
   "plugins": {
     "shell": {
-      "all": true,
-      "scope": [
-        {
-          "name": "bin/ffmpeg",
-          "sidecar": true
-        }
-      ]
-    },
-    "dialog": {
-      "all": true
+      "open": true
     }
   }
 }

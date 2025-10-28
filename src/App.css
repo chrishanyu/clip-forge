@@ -11,14 +11,40 @@
   line-height: 24px;
   font-weight: 400;
 
-  color: #0f0f0f;
-  background-color: #f6f6f6;
+  /* Design Tokens for ClipForge */
+  --color-primary: #3B82F6;
+  --color-danger: #EF4444;
+  --color-success: #10B981;
+  --color-background: #1F2937;
+  --color-surface: #374151;
+  --color-text: #F9FAFB;
+  --color-text-secondary: #9CA3AF;
+  
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+
+  color: var(--color-text);
+  background-color: var(--color-background);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
+}
+
+/* App Layout */
+.app {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
 }
 
 .container {

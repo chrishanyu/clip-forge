@@ -83,21 +83,19 @@ async fn extract_metadata_internal(
 ) -> CommandResult<VideoMetadata> {
     // Get FFmpeg sidecar
     let sidecar = app_handle.shell()
-        .sidecar("ffprobe")
+        .sidecar("ffmpeg")
         .map_err(|e| CommandError::ffmpeg_error(format!("Failed to create FFmpeg sidecar: {}", e)))?;
     
-    // Build FFmpeg probe command
+    // Build FFmpeg probe command (using ffmpeg instead of ffprobe)
     let output = sidecar
         .args(&[
-            "-v", "quiet",
-            "-print_format", "json",
-            "-show_format",
-            "-show_streams",
-            file_path,
+            "-i", file_path,
+            "-f", "null",
+            "-",
         ])
         .output()
         .await
-        .map_err(|e| CommandError::ffmpeg_error(format!("Failed to execute ffprobe: {}", e)))?;
+        .map_err(|e| CommandError::ffmpeg_error(format!("Failed to execute ffmpeg: {}", e)))?;
     
     // Check if command succeeded
     if !output.status.success() {
@@ -108,82 +106,90 @@ async fn extract_metadata_internal(
         )));
     }
     
-    // Parse JSON output
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    let probe_data: ProbeData = serde_json::from_str(&stdout)
-        .map_err(|e| CommandError::ffmpeg_error(format!("Failed to parse FFmpeg output: {}", e)))?;
+    // Parse stderr output (FFmpeg outputs metadata to stderr)
+    let stderr = String::from_utf8_lossy(&output.stderr);
     
-    // Extract metadata from probe data
-    extract_metadata_from_probe_data(&probe_data, file_path).await
+    // Extract metadata from FFmpeg stderr output
+    extract_metadata_from_ffmpeg_output(&stderr, file_path).await
 }
 
-/// Extract metadata from FFmpeg probe JSON data
-async fn extract_metadata_from_probe_data(
-    probe_data: &ProbeData,
+/// Extract metadata from FFmpeg stderr output
+async fn extract_metadata_from_ffmpeg_output(
+    stderr: &str,
     file_path: &str,
 ) -> CommandResult<VideoMetadata> {
     // Get file size
     let file_size = crate::commands::get_file_size(file_path)?;
     
-    // Extract format information
-    let format = probe_data.format.format_name.clone().unwrap_or_else(|| {
-        std::path::Path::new(file_path)
-            .extension()
-            .and_then(|ext| ext.to_str())
-            .unwrap_or("unknown")
-            .to_lowercase()
-    });
+    // Parse FFmpeg stderr output using regex
+    let duration_regex = regex::Regex::new(r"Duration: (\d{2}):(\d{2}):(\d{2})\.(\d{2})")
+        .map_err(|e| CommandError::ffmpeg_error(format!("Failed to create duration regex: {}", e)))?;
+    
+    let video_stream_regex = regex::Regex::new(r"Stream #\d+:\d+.*Video: (\w+).*?(\d+)x(\d+).*?(\d+(?:\.\d+)?) fps")
+        .map_err(|e| CommandError::ffmpeg_error(format!("Failed to create video stream regex: {}", e)))?;
+    
+    let bitrate_regex = regex::Regex::new(r"bitrate: (\d+) kb/s")
+        .map_err(|e| CommandError::ffmpeg_error(format!("Failed to create bitrate regex: {}", e)))?;
     
     // Extract duration
-    let duration = probe_data.format.duration
-        .as_ref()
-        .and_then(|d| d.parse::<f64>().ok())
-        .unwrap_or(0.0);
-    
-    // Extract bitrate
-    let bitrate = probe_data.format.bit_rate
-        .as_ref()
-        .and_then(|b| b.parse::<u64>().ok())
-        .unwrap_or(0);
-    
-    // Find video stream
-    let video_stream = probe_data.streams.iter()
-        .find(|stream| stream.codec_type == Some("video".to_string()));
-    
-    let (width, height, fps, codec) = if let Some(stream) = video_stream {
-        let width = stream.width.unwrap_or(0);
-        let height = stream.height.unwrap_or(0);
+    let duration = if let Some(captures) = duration_regex.captures(stderr) {
+        let hours: f64 = captures.get(1).unwrap().as_str().parse().unwrap_or(0.0);
+        let minutes: f64 = captures.get(2).unwrap().as_str().parse().unwrap_or(0.0);
+        let seconds: f64 = captures.get(3).unwrap().as_str().parse().unwrap_or(0.0);
+        let centiseconds: f64 = captures.get(4).unwrap().as_str().parse().unwrap_or(0.0);
         
-        // Extract FPS
-        let fps = if let Some(fps_str) = &stream.r_frame_rate {
-            // Parse fraction like "30/1" or "30000/1001"
-            if let Some((num, den)) = fps_str.split_once('/') {
-                if let (Ok(n), Ok(d)) = (num.parse::<f64>(), den.parse::<f64>()) {
-                    if d != 0.0 { n / d } else { 0.0 }
-                } else { 0.0 }
-            } else { 0.0 }
-        } else { 0.0 };
-        
-        let codec = stream.codec_name.clone().unwrap_or_else(|| "unknown".to_string());
+        hours * 3600.0 + minutes * 60.0 + seconds + centiseconds / 100.0
+    } else {
+        return Err(CommandError::ffmpeg_error("Could not extract duration from FFmpeg output".to_string()));
+    };
+    
+    // Extract video stream info
+    let (width, height, fps, codec) = if let Some(captures) = video_stream_regex.captures(stderr) {
+        let codec = captures.get(1).unwrap().as_str().to_string();
+        let width: u32 = captures.get(2).unwrap().as_str().parse().unwrap_or(0);
+        let height: u32 = captures.get(3).unwrap().as_str().parse().unwrap_or(0);
+        let fps: f64 = captures.get(4).unwrap().as_str().parse().unwrap_or(0.0);
         
         (width, height, fps, codec)
     } else {
-        (0, 0, 0.0, "unknown".to_string())
+        return Err(CommandError::ffmpeg_error("Could not extract video stream info from FFmpeg output".to_string()));
     };
     
-    // Find audio stream
-    let audio_stream = probe_data.streams.iter()
-        .find(|stream| stream.codec_type == Some("audio".to_string()));
-    
-    let (has_audio, audio_codec, audio_bitrate) = if let Some(stream) = audio_stream {
-        let codec = stream.codec_name.clone();
-        let bitrate = stream.bit_rate
-            .as_ref()
-            .and_then(|b| b.parse::<u64>().ok());
-        
-        (true, codec, bitrate)
+    // Extract bitrate
+    let bitrate = if let Some(captures) = bitrate_regex.captures(stderr) {
+        captures.get(1).unwrap().as_str().parse::<u64>().unwrap_or(0) * 1000 // Convert kb/s to b/s
     } else {
-        (false, None, None)
+        0 // Default bitrate if not found
+    };
+    
+    // Extract format from file extension
+    let format = std::path::Path::new(file_path)
+        .extension()
+        .and_then(|ext| ext.to_str())
+        .unwrap_or("unknown")
+        .to_lowercase();
+    
+    // Check for audio stream (simplified - assume has audio if we can't determine)
+    let has_audio = stderr.contains("Audio:");
+    let audio_codec = if has_audio {
+        // Try to extract audio codec
+        let audio_regex = regex::Regex::new(r"Audio: (\w+)").ok();
+        audio_regex.and_then(|re| re.captures(stderr))
+            .and_then(|caps| caps.get(1))
+            .map(|m| m.as_str().to_string())
+    } else {
+        None
+    };
+    
+    let audio_bitrate = if has_audio {
+        // Try to extract audio bitrate
+        let audio_bitrate_regex = regex::Regex::new(r"Audio:.*?(\d+) kb/s").ok();
+        audio_bitrate_regex.and_then(|re| re.captures(stderr))
+            .and_then(|caps| caps.get(1))
+            .and_then(|m| m.as_str().parse::<u64>().ok())
+            .map(|rate| rate * 1000) // Convert kb/s to b/s
+    } else {
+        None
     };
     
     Ok(VideoMetadata {
@@ -228,6 +234,10 @@ struct Format {
     duration: Option<String>,
     bit_rate: Option<String>,
 }
+
+// ============================================================================
+// FFMPEG PROBE DATA STRUCTURES
+// ============================================================================
 
 // ============================================================================
 // UTILITY FUNCTIONS

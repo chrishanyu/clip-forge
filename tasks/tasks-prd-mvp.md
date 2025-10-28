@@ -79,10 +79,10 @@
   - [x] 3.8 Write unit tests for FFmpeg integration and command handlers
 
 - [ ] 4.0 Create media library interface with drag-and-drop
-  - [ ] 4.1 Create MediaLibrary component with grid layout and empty state
-  - [ ] 4.2 Implement ImportButton component with native file dialog integration
-  - [ ] 4.3 Create ClipCard component displaying thumbnails, metadata, and hover effects
-  - [ ] 4.4 Implement drag-and-drop functionality for importing files
+  - [x] 4.1 Create MediaLibrary component with grid layout and empty state
+  - [x] 4.2 Implement ImportButton component with native file dialog integration
+  - [x] 4.3 Create ClipCard component displaying thumbnails, metadata, and hover effects
+  - [x] 4.4 Implement drag-and-drop functionality for importing files
   - [ ] 4.5 Add click handlers for clip selection and double-click to add to timeline
   - [ ] 4.6 Implement right-click context menu for clip deletion
   - [ ] 4.7 Add loading indicators during import and thumbnail generation
