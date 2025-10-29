@@ -236,65 +236,55 @@ export const useTimelineStore = create<TimelineStore>()(
       moveClip: (clipId: string, newStartTime: number, newTrackId?: string) => {
         set(
           (state) => {
-            const updatedTracks = state.tracks.map((track) => {
-              const clip = track.clips.find((c) => c.id === clipId);
-              if (!clip) return track;
-              
-              // Remove clip from current track
-              const filteredClips = track.clips.filter((c) => c.id !== clipId);
-              
-              // Update clip with new position
-              const updatedClip = {
-                ...clip,
-                startTime: newStartTime,
-                trackId: newTrackId || clip.trackId,
-              };
-              
-              // Add to appropriate track
-              if (newTrackId && newTrackId !== track.id) {
-                // Moving to different track
-                return { ...track, clips: filteredClips };
-              } else {
-                // Staying on same track
-                const newClips = [...filteredClips, updatedClip].sort(
-                  (a, b) => a.startTime - b.startTime
-                );
-                return { ...track, clips: newClips };
-              }
-            });
+            // Step 1: Find the clip in any track
+            let clipToMove: TimelineClip | undefined;
+            let sourceTrackId: string | undefined;
             
-            // If moving to different track, add to that track
-            if (newTrackId) {
-              const targetTrack = updatedTracks.find((t) => t.id === newTrackId);
-              if (targetTrack) {
-                const clip = state.tracks
-                  .flatMap((t) => t.clips)
-                  .find((c) => c.id === clipId);
-                if (clip) {
-                  const updatedClip = {
-                    ...clip,
-                    startTime: newStartTime,
-                    trackId: newTrackId,
-                  };
-                  
-                  const finalTracks = updatedTracks.map((track) =>
-                    track.id === newTrackId
-                      ? {
-                          ...track,
-                          clips: [...track.clips, updatedClip].sort(
-                            (a, b) => a.startTime - b.startTime
-                          ),
-                        }
-                      : track
-                  );
-                  
-                  return { 
-                    tracks: finalTracks,
-                    totalDuration: calculateTotalDuration(finalTracks),
-                  };
-                }
+            for (const track of state.tracks) {
+              const foundClip = track.clips.find((c) => c.id === clipId);
+              if (foundClip) {
+                clipToMove = foundClip;
+                sourceTrackId = track.id;
+                break;
               }
             }
+            
+            if (!clipToMove || !sourceTrackId) {
+              console.warn(`Clip ${clipId} not found in any track`);
+              return state;
+            }
+            
+            // Step 2: Determine target track (use current track if not specified)
+            const targetTrackId = newTrackId || sourceTrackId;
+            
+            // Step 3: Create updated clip
+            const updatedClip = {
+              ...clipToMove,
+              startTime: newStartTime,
+              trackId: targetTrackId,
+            };
+            
+            // Step 4: Remove clip from ALL tracks and add to target track in one pass
+            const updatedTracks = state.tracks.map((track) => {
+              // Remove clip from this track (whether source or not, to prevent duplicates)
+              const filteredClips = track.clips.filter((c) => c.id !== clipId);
+              
+              // If this is the target track, add the updated clip
+              if (track.id === targetTrackId) {
+                return {
+                  ...track,
+                  clips: [...filteredClips, updatedClip].sort(
+                    (a, b) => a.startTime - b.startTime
+                  ),
+                };
+              }
+              
+              // Otherwise, just return with clip removed
+              return {
+                ...track,
+                clips: filteredClips,
+              };
+            });
             
             return { 
               tracks: updatedTracks,
