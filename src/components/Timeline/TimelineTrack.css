@@ -57,6 +57,7 @@ body.dragging .timeline-track[data-drop-zone]:hover::after {
   padding: var(--spacing-sm, 8px) var(--spacing-md, 16px);
   background-color: var(--color-surface, #374151);
   border-right: 1px solid var(--color-border, #4B5563);
+  box-sizing: border-box; /* Ensure width includes padding and border */
 }
 
 .track-name {
@@ -81,6 +82,7 @@ body.dragging .timeline-track[data-drop-zone]:hover::after {
 .track-content {
   position: relative;
   flex: 1;
+  width: 100%; /* Inherits width from timeline-canvas */
   min-height: 60px;
   background-color: var(--color-background, #1F2937);
   background-image: 
@@ -114,6 +116,7 @@ body.dragging .timeline-track[data-drop-zone]:hover::after {
     width: 150px;
     min-width: 150px;
     padding: var(--spacing-xs, 4px) var(--spacing-sm, 8px);
+    /* box-sizing: border-box inherited from parent rule */
   }
   
   .track-name {

@@ -7,6 +7,7 @@ import './TimeRuler.css';
 
 export interface TimeRulerProps {
   pixelsPerSecond: number;
+  timelineDuration: number;
   onTimeClick?: (time: number) => void;
   className?: string;
 }
@@ -17,6 +18,7 @@ export interface TimeRulerProps {
 
 export const TimeRuler: React.FC<TimeRulerProps> = ({
   pixelsPerSecond,
+  timelineDuration,
   onTimeClick,
   className = ''
 }) => {
@@ -56,6 +58,10 @@ export const TimeRuler: React.FC<TimeRulerProps> = ({
       isMajor: boolean;
     }> = [];
 
+    // Track header width offset (must match .track-header width in CSS)
+    // Note: .track-header uses box-sizing: border-box, so 200px includes padding and border
+    const TRACK_HEADER_WIDTH = 200;
+
     // Calculate appropriate time intervals based on zoom level
     let interval: number;
     let majorInterval: number;
@@ -86,29 +92,23 @@ export const TimeRuler: React.FC<TimeRulerProps> = ({
       majorInterval = 5; // 5 seconds
     }
 
-    // Generate markers for a reasonable range (0 to 10 minutes)
-    const maxTime = 600; // 10 minutes
-    const maxPixels = maxTime * pixelsPerSecond;
-
-    for (let time = 0; time <= maxTime; time += interval) {
-      const x = time * pixelsPerSecond;
+    // Generate markers based on actual timeline duration
+    // Add track header offset to align with track content
+    for (let time = 0; time <= timelineDuration; time += interval) {
+      const x = (time * pixelsPerSecond) + TRACK_HEADER_WIDTH;
+      const isMajor = time % majorInterval === 0;
+      const label = formatTime(time);
       
-      // Only show markers that would be visible
-      if (x > -100 && x < maxPixels + 100) {
-        const isMajor = time % majorInterval === 0;
-        const label = formatTime(time);
-        
-        markers.push({
-          time,
-          x,
-          label,
-          isMajor
-        });
-      }
+      markers.push({
+        time,
+        x,
+        label,
+        isMajor
+      });
     }
 
     return markers;
-  }, [pixelsPerSecond, formatTime]);
+  }, [pixelsPerSecond, timelineDuration, formatTime]);
 
   /**
    * Handle time ruler click

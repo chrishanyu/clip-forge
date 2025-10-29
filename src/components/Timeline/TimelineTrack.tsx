@@ -34,12 +34,27 @@ export const TimelineTrack: React.FC<TimelineTrackProps> = ({
 
   useEffect(() => {
     const handleDrop = (clip: any, x: number, y: number) => {
-      // Get the track element to calculate relative position
+      // Get the track element and find the content area (not the header)
       const trackElement = document.querySelector(`[data-drop-zone="${track.id}"]`);
-      if (trackElement) {
-        const rect = trackElement.getBoundingClientRect();
-        const relativeX = x - rect.left;
-        const startTime = Math.max(0, relativeX / pixelsPerSecond);
+      const contentElement = trackElement?.querySelector('.track-content');
+      
+      // Get the timeline-content parent for scroll position
+      const timelineContent = document.querySelector('.timeline-content');
+      
+      if (contentElement && timelineContent) {
+        const rect = contentElement.getBoundingClientRect();
+        const scrollLeft = timelineContent.scrollLeft || 0;
+        
+        // Calculate position relative to content area (not including header)
+        // and add scroll position to get actual timeline position
+        const relativeX = (x - rect.left) + scrollLeft;
+        let startTime = Math.max(0, relativeX / pixelsPerSecond);
+        
+        // Snap to start if dropped within 2 seconds of the beginning
+        const SNAP_TO_START_THRESHOLD = 2; // seconds
+        if (startTime < SNAP_TO_START_THRESHOLD) {
+          startTime = 0;
+        }
         
         onDrop?.(track.id, startTime, clip);
       }

@@ -9,20 +9,7 @@
   background-color: var(--color-background, #1F2937);
   border-top: 1px solid var(--color-border, #374151);
   user-select: none;
-}
-
-/* ============================================================================
-   TIMELINE HEADER
-   ============================================================================ */
-
-.timeline-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--spacing-sm, 8px) var(--spacing-md, 16px);
-  background-color: var(--color-surface, #374151);
-  border-bottom: 1px solid var(--color-border, #374151);
-  min-height: 40px;
+  overflow: hidden;
 }
 
 /* ============================================================================
@@ -37,7 +24,7 @@
 }
 
 /* ============================================================================
-   TIMELINE CONTENT
+   TIMELINE CONTENT (Scrollable Viewport)
    ============================================================================ */
 
 .timeline-content {
@@ -69,12 +56,19 @@
 }
 
 /* ============================================================================
+   TIMELINE CANVAS (Explicit width container)
+   ============================================================================ */
+
+.timeline-canvas {
+  position: relative;
+  min-height: 100%;
+  /* Width set dynamically via inline style based on content duration */
+}
+
+/* ============================================================================
    RESPONSIVE DESIGN
    ============================================================================ */
 
 @media (max-width: 768px) {
-  .timeline-header {
-    padding: var(--spacing-xs, 4px) var(--spacing-sm, 8px);
-    min-height: 36px;
-  }
+  /* Timeline responsive styles can be added here if needed */
 }
