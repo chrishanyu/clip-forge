@@ -34,7 +34,7 @@ interface TimelineStore {
   addClipToTrack: (clip: TimelineClip, trackId: string) => void;
   removeClip: (clipId: string) => void;
   moveClip: (clipId: string, newStartTime: number, newTrackId?: string) => void;
-  trimClip: (clipId: string, trimStart: number, trimEnd: number) => void;
+  trimClip: (clipId: string, trimStart: number, trimEnd: number, adjustStartTime?: number) => void;
   selectClip: (clipId: string | null) => void;
   removeDuplicateClips: () => void;
   
@@ -339,7 +339,7 @@ export const useTimelineStore = create<TimelineStore>()(
         );
       },
       
-      trimClip: (clipId: string, trimStart: number, trimEnd: number) => {
+      trimClip: (clipId: string, trimStart: number, trimEnd: number, adjustStartTime: number = 0) => {
         set(
           (state) => {
             const duration = trimEnd - trimStart;
@@ -357,6 +357,7 @@ export const useTimelineStore = create<TimelineStore>()(
                       trimStart,
                       trimEnd,
                       duration,
+                      startTime: clip.startTime + adjustStartTime, // Adjust position for left trim
                     }
                   : clip
               ),

@@ -260,17 +260,23 @@ export const TimelineClip: React.FC<TimelineClipProps> = ({
     const deltaTime = deltaX / pixelsPerSecond;
     
     if (isResizing === 'left') {
+      // When trimming from left, calculate how much we're trimming
+      // and adjust startTime to keep the right edge fixed
       const newTrimStart = Math.max(0, Math.min(clip.trimEnd - 0.1, dragStartTime + deltaTime));
-      trimClip(clip.id, newTrimStart, clip.trimEnd);
+      const trimDelta = newTrimStart - clip.trimStart; // Amount trimmed from left
+      
+      // Pass the adjustment to the store (atomic update)
+      trimClip(clip.id, newTrimStart, clip.trimEnd, trimDelta);
     } else {
+      // Right trim: left edge stays fixed (no position adjustment needed)
       const newTrimEnd = Math.max(clip.trimStart + 0.1, dragStartTime + deltaTime);
-      trimClip(clip.id, clip.trimStart, newTrimEnd);
+      trimClip(clip.id, clip.trimStart, newTrimEnd, 0);
     }
   };
 
-  const handleResizeUp = () => {
+  const handleResizeUp = useCallback(() => {
     setIsResizing(null);
-  };
+  }, []);
 
   // ============================================================================
   // EFFECTS
@@ -360,6 +366,10 @@ export const TimelineClip: React.FC<TimelineClipProps> = ({
           transform: isDragging ? `translateZ(0)` : 'none',
         }}
         onMouseDown={handleMouseDown}
+        onClick={(e) => {
+          console.log('[TimelineClip] Preventing click propagation to timeline');
+          e.stopPropagation();
+        }}
       >
         {/* Clip Content */}
         <div className="clip-content">
@@ -375,12 +385,20 @@ export const TimelineClip: React.FC<TimelineClipProps> = ({
         <div
           className="resize-handle left"
           onMouseDown={(e) => handleResizeStart(e, 'left')}
+          onClick={(e) => {
+            // Prevent click from propagating to timeline
+            e.stopPropagation();
+          }}
         />
 
         {/* Right Resize Handle */}
         <div
           className="resize-handle right"
           onMouseDown={(e) => handleResizeStart(e, 'right')}
+          onClick={(e) => {
+            // Prevent click from propagating to timeline
+            e.stopPropagation();
+          }}
         />
       </div>
     </>
