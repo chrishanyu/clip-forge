@@ -13,6 +13,7 @@ use chrono;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 use uuid::Uuid;
+use tauri_plugin_dialog::DialogExt;
 
 // ============================================================================
 // DATA STRUCTURES
@@ -298,6 +299,29 @@ pub fn resolve_absolute_path(file_path: &str) -> CommandResult<String> {
         let absolute_path = current_dir.join(path);
 
         Ok(absolute_path.to_string_lossy().to_string())
+    }
+}
+
+/// Select output directory for export
+#[tauri::command]
+pub async fn select_output_path(app_handle: tauri::AppHandle) -> CommandResult<String> {
+    use std::sync::mpsc;
+    
+    let (tx, rx) = mpsc::channel();
+    
+    app_handle
+        .dialog()
+        .file()
+        .set_title("Select Output Directory")
+        .pick_folder(move |path| {
+            let _ = tx.send(path);
+        });
+
+    // Wait for the result
+    match rx.recv() {
+        Ok(Some(path)) => Ok(path.to_string()),
+        Ok(None) => Err(CommandError::io_error("No directory selected".to_string())),
+        Err(_) => Err(CommandError::io_error("Failed to get directory selection result".to_string())),
     }
 }
 

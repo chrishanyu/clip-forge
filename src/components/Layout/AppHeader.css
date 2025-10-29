@@ -1,0 +1,235 @@
+/* ============================================================================
+   APP HEADER STYLES
+   ============================================================================ */
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 60px;
+  padding: 0 20px;
+  background: #2a2a2a;
+  border-bottom: 1px solid #333;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+}
+
+.app-header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.app-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.app-logo-icon {
+  font-size: 24px;
+}
+
+.app-logo-text {
+  background: linear-gradient(135deg, #3B82F6, #8B5CF6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.app-header-center {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  justify-content: center;
+}
+
+.timeline-info {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 8px 16px;
+  background: #1a1a1a;
+  border-radius: 8px;
+  border: 1px solid #333;
+}
+
+.timeline-info-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.timeline-info-label {
+  color: #9CA3AF;
+  font-weight: 500;
+}
+
+.timeline-info-value {
+  color: #ffffff;
+  font-weight: 600;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+.app-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* ============================================================================
+   EXPORT BUTTON
+   ============================================================================ */
+
+.export-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #3B82F6, #2563EB);
+  border: none;
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+}
+
+.export-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #2563EB, #1D4ED8);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4);
+}
+
+.export-button:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+}
+
+.export-button-disabled {
+  background: #6B7280;
+  cursor: not-allowed;
+  box-shadow: none;
+  opacity: 0.6;
+}
+
+.export-button-disabled:hover {
+  background: #6B7280;
+  transform: none;
+  box-shadow: none;
+}
+
+.export-button-icon {
+  font-size: 16px;
+}
+
+.export-button-text {
+  font-weight: 600;
+}
+
+/* ============================================================================
+   RESPONSIVE DESIGN
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .app-header {
+    padding: 0 16px;
+    height: 50px;
+  }
+
+  .app-logo {
+    font-size: 18px;
+  }
+
+  .app-logo-icon {
+    font-size: 20px;
+  }
+
+  .timeline-info {
+    gap: 16px;
+    padding: 6px 12px;
+  }
+
+  .timeline-info-item {
+    font-size: 12px;
+  }
+
+  .export-button {
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+
+  .export-button-text {
+    display: none;
+  }
+
+  .export-button-icon {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-header {
+    padding: 0 12px;
+  }
+
+  .timeline-info {
+    display: none;
+  }
+
+  .app-header-center {
+    display: none;
+  }
+}
+
+/* ============================================================================
+   ANIMATION STATES
+   ============================================================================ */
+
+.export-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
+.export-button:focus-visible {
+  outline: 2px solid #3B82F6;
+  outline-offset: 2px;
+}
+
+/* ============================================================================
+   LOADING STATE
+   ============================================================================ */
+
+.export-button.loading {
+  position: relative;
+  color: transparent;
+}
+
+.export-button.loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  border: 2px solid transparent;
+  border-top: 2px solid #ffffff;
+  border-radius: 50%;
+  animation: export-button-spin 1s linear infinite;
+}
+
+@keyframes export-button-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

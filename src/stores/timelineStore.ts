@@ -48,6 +48,9 @@ interface TimelineStore {
   
   // Actions - Snap to Grid
   setSnapToGrid: (enabled: boolean) => void;
+  
+  // Actions - Timeline Info
+  getTimelineDuration: () => number;
   toggleSnapToGrid: () => void;
   setSnapInterval: (interval: number) => void;
   
@@ -528,6 +531,12 @@ export const useTimelineStore = create<TimelineStore>()(
         set({ snapInterval: clampedInterval }, false, 'timelineStore/setSnapInterval');
       },
       
+      // Actions - Timeline Info
+      getTimelineDuration: () => {
+        const state = get();
+        return state.timelineDuration;
+      },
+      
       // Actions - Error Handling
       setError: (error: AppError | null) => {
         set({ error }, false, 'timelineStore/setError');
@@ -627,6 +636,7 @@ export const useTimelineActions = () =>
     setSnapToGrid: state.setSnapToGrid,
     toggleSnapToGrid: state.toggleSnapToGrid,
     setSnapInterval: state.setSnapInterval,
+    getTimelineDuration: state.getTimelineDuration,
     setError: state.setError,
     clearError: state.clearError,
   }));

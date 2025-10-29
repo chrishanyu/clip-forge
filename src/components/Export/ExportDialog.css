@@ -1,0 +1,358 @@
+/* ============================================================================
+   EXPORT DIALOG STYLES
+   ============================================================================ */
+
+.export-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.export-dialog {
+  background: #1a1a1a;
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  width: 90%;
+  max-width: 500px;
+  max-height: 85vh;
+  overflow: hidden;
+  border: 1px solid #333;
+  display: flex;
+  flex-direction: column;
+}
+
+.export-dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 24px 0 24px;
+  border-bottom: 1px solid #333;
+  margin-bottom: 24px;
+}
+
+.export-dialog-header h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.export-dialog-close {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 28px;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.export-dialog-close:hover {
+  background: #333;
+  color: #ffffff;
+}
+
+.export-dialog-content {
+  padding: 0 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  flex: 1;
+  overflow-y: auto;
+  max-height: calc(85vh - 120px);
+}
+
+/* ============================================================================
+   FORM FIELDS
+   ============================================================================ */
+
+.export-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.export-field label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #ffffff;
+  margin-bottom: 4px;
+}
+
+.export-input {
+  background: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 6px;
+  padding: 12px 16px;
+  color: #ffffff;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.export-input:focus {
+  outline: none;
+  border-color: #007acc;
+  box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.2);
+}
+
+.export-input:disabled {
+  background: #1a1a1a;
+  color: #666;
+  cursor: not-allowed;
+}
+
+.export-input::placeholder {
+  color: #666;
+}
+
+/* ============================================================================
+   PATH SELECTION
+   ============================================================================ */
+
+.export-path-group {
+  display: flex;
+  gap: 8px;
+}
+
+.export-path-group .export-input {
+  flex: 1;
+}
+
+.export-path-button {
+  background: #007acc;
+  border: none;
+  border-radius: 6px;
+  padding: 12px 20px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.export-path-button:hover:not(:disabled) {
+  background: #005a9e;
+}
+
+.export-path-button:disabled {
+  background: #444;
+  color: #666;
+  cursor: not-allowed;
+}
+
+/* ============================================================================
+   SELECT DROPDOWNS
+   ============================================================================ */
+
+.export-select {
+  width: 100%;
+  padding: 12px 16px;
+  background: #1a1a1a;
+  border: 1px solid #444;
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+  padding-right: 40px;
+}
+
+.export-select:focus {
+  outline: none;
+  border-color: #007acc;
+  box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.2);
+}
+
+.export-select:disabled {
+  background: #1a1a1a;
+  color: #666;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.export-select option {
+  background: #1a1a1a;
+  color: #ffffff;
+  padding: 8px;
+}
+
+/* ============================================================================
+   RADIO GROUPS (Legacy - keeping for potential future use)
+   ============================================================================ */
+
+.export-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.export-radio-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  padding: 8px 0;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.export-radio-option:hover {
+  background: #2a2a2a;
+}
+
+.export-radio-option input[type="radio"] {
+  margin: 0;
+  width: 18px;
+  height: 18px;
+  accent-color: #007acc;
+}
+
+.export-radio-label {
+  font-size: 14px;
+  color: #ffffff;
+  user-select: none;
+}
+
+/* ============================================================================
+   FORMAT DISPLAY
+   ============================================================================ */
+
+.export-format-display {
+  background: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 6px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.export-format-display span {
+  font-size: 14px;
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.export-format-display small {
+  font-size: 12px;
+  color: #888;
+}
+
+/* ============================================================================
+   ERROR DISPLAY
+   ============================================================================ */
+
+.export-error {
+  background: #4a1a1a;
+  border: 1px solid #cc4444;
+  border-radius: 6px;
+  padding: 12px 16px;
+  color: #ff6666;
+  font-size: 14px;
+  margin-top: 8px;
+}
+
+/* ============================================================================
+   ACTION BUTTONS
+   ============================================================================ */
+
+.export-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 20px 24px;
+  border-top: 1px solid #333;
+  background: #1a1a1a;
+  flex-shrink: 0;
+}
+
+.export-button {
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  min-width: 100px;
+}
+
+.export-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.export-button-primary {
+  background: #007acc;
+  color: #ffffff;
+}
+
+.export-button-primary:hover:not(:disabled) {
+  background: #005a9e;
+}
+
+.export-button-secondary {
+  background: #444;
+  color: #ffffff;
+}
+
+.export-button-secondary:hover:not(:disabled) {
+  background: #555;
+}
+
+/* ============================================================================
+   RESPONSIVE DESIGN
+   ============================================================================ */
+
+@media (max-width: 600px) {
+  .export-dialog {
+    width: 95%;
+    margin: 20px;
+  }
+  
+  .export-dialog-header {
+    padding: 20px 20px 0 20px;
+  }
+  
+  .export-dialog-content {
+    padding: 0 20px;
+    max-height: calc(85vh - 100px);
+  }
+  
+  .export-dialog-actions {
+    padding: 16px 20px;
+  }
+  
+  .export-path-group {
+    flex-direction: column;
+  }
+  
+  .export-dialog-actions {
+    flex-direction: column;
+  }
+  
+  .export-button {
+    width: 100%;
+  }
+}

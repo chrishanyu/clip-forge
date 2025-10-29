@@ -10,7 +10,7 @@ mod ffmpeg;
 // Re-export command modules
 use commands::file_ops::{
     cleanup_files, get_app_data_directory, get_file_info, get_thumbnails_directory,
-    import_video_file, validate_file,
+    import_video_file, validate_file, select_output_path,
 };
 
 use commands::metadata::{
@@ -22,6 +22,7 @@ use commands::metadata::{
 use commands::export::{
     cleanup_export_files, estimate_export_info, export_timeline, export_timeline_with_progress,
     get_export_file_path, validate_export_path, validate_export_settings_command,
+    cancel_export, get_export_status,
 };
 
 use commands::project::{
@@ -55,6 +56,7 @@ pub fn run() {
             cleanup_files,
             get_app_data_directory,
             get_thumbnails_directory,
+            select_output_path,
             // Metadata operations
             import_video_with_metadata,
             get_video_metadata,
@@ -73,6 +75,8 @@ pub fn run() {
             get_export_file_path,
             validate_export_path,
             cleanup_export_files,
+            cancel_export,
+            get_export_status,
             // Project operations
             create_project,
             open_project,

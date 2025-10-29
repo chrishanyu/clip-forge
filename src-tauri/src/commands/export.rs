@@ -10,6 +10,7 @@ use crate::ffmpeg::export::{
     validate_export_settings, ExportClip, ExportSettings, ExportVideoRequest, ExportVideoResponse,
 };
 use serde::{Deserialize, Serialize};
+use tauri::Emitter;
 
 // ============================================================================
 // DATA STRUCTURES
@@ -124,10 +125,21 @@ pub async fn export_timeline_with_progress(
         })
         .collect();
 
+    // Create full output path by combining directory and filename
+    let filename = if request.filename.ends_with(".mp4") {
+        request.filename
+    } else {
+        format!("{}.mp4", request.filename)
+    };
+    let full_output_path = std::path::Path::new(&request.output_path)
+        .join(&filename)
+        .to_string_lossy()
+        .to_string();
+
     // Create export request
     let export_request = ExportVideoRequest {
         clips: export_clips,
-        output_path: request.output_path,
+        output_path: full_output_path,
         settings: request.settings,
     };
 
@@ -241,6 +253,57 @@ pub async fn validate_export_path(output_path: String) -> CommandResult<Validati
 #[tauri::command]
 pub async fn cleanup_export_files() -> CommandResult<()> {
     crate::ffmpeg::export::cleanup_export_temp_files().await
+}
+
+/// Cancel an ongoing export
+#[tauri::command]
+pub async fn cancel_export(
+    app_handle: tauri::AppHandle,
+    export_id: String,
+) -> CommandResult<bool> {
+    // For MVP, we'll implement a simple cancellation mechanism
+    // In a full implementation, this would track active processes and kill them
+    
+    // Emit cancellation progress
+    let cancel_progress = crate::ffmpeg::export::ExportProgress {
+        progress: 0.0,
+        current_step: "Cancelled".to_string(),
+        estimated_time_remaining: 0.0,
+        error: Some("Export cancelled by user".to_string()),
+        current_frame: None,
+        total_frames: None,
+        fps: None,
+        bitrate: None,
+        time: None,
+    };
+    
+    app_handle.emit("export-progress", &cancel_progress)
+        .map_err(|e| CommandError::ffmpeg_error(format!("Failed to emit cancellation progress: {}", e)))?;
+
+    // TODO: Implement actual process termination
+    // For now, just return success
+    Ok(true)
+}
+
+/// Get export status
+#[tauri::command]
+pub async fn get_export_status(
+    _app_handle: tauri::AppHandle,
+    _export_id: String,
+) -> CommandResult<crate::ffmpeg::export::ExportProgress> {
+    // For MVP, return a default status
+    // In a full implementation, this would track active exports
+    Ok(crate::ffmpeg::export::ExportProgress {
+        progress: 0.0,
+        current_step: "Idle".to_string(),
+        estimated_time_remaining: 0.0,
+        error: None,
+        current_frame: None,
+        total_frames: None,
+        fps: None,
+        bitrate: None,
+        time: None,
+    })
 }
 
 // ============================================================================

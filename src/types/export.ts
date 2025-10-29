@@ -12,8 +12,8 @@ export interface ExportSettings {
   quality: ExportQuality;       // Quality preset
   
   // Format
-  format: 'mp4';               // Fixed to MP4 for MVP
-  codec: 'h264';               // Fixed to H.264 for MVP
+  format: ExportFormat;        // Output format
+  codec: ExportCodec;          // Video codec
 }
 
 /**
@@ -33,12 +33,32 @@ export type ExportQuality =
   | 'low';                      // Lower quality (smaller file)
 
 /**
+ * ExportFormat - Available output formats
+ */
+export type ExportFormat = 
+  | 'mp4'                       // MP4 container
+  | 'mov'                       // QuickTime MOV
+  | 'avi';                      // AVI container
+
+/**
+ * ExportCodec - Available video codecs
+ */
+export type ExportCodec = 
+  | 'h264'                      // H.264 (most compatible)
+  | 'h265'                      // H.265/HEVC (better compression)
+  | 'prores';                   // ProRes (professional)
+
+/**
  * ExportProgress - Real-time export progress tracking
  */
 export interface ExportProgress {
-  isExporting: boolean;         // Currently exporting
   progress: number;             // Progress percentage (0-100)
-  currentStep: string;          // Current operation description
-  estimatedTimeRemaining: number; // Seconds remaining (estimate)
+  current_step: string;         // Current operation description
+  estimated_time_remaining: number; // Seconds remaining (estimate)
   error: string | null;         // Error message if export failed
+  current_frame?: number;       // Current frame being processed
+  total_frames?: number;        // Total frames to process
+  fps?: number;                 // Current processing FPS
+  bitrate?: number;             // Current bitrate (kbps)
+  time?: string;                // Current time position (HH:MM:SS.mm)
 }

@@ -3,6 +3,7 @@ import { VideoPlayer } from "@/components/Preview";
 import { Timeline } from "@/components/Timeline";
 import { ToastContainer } from "@/components/Toast";
 import { DragOverlay } from "@/components/DragOverlay";
+import { AppHeader } from "@/components/Layout";
 import { DragDropProvider } from "@/contexts/DragDropContext";
 import { useToastStore } from "@/stores/toastStore";
 import { useProjectStore } from "@/stores/projectStore";
@@ -61,6 +62,7 @@ function App() {
   return (
     <DragDropProvider>
       <div className="app">
+        <AppHeader />
         <div className="app-layout">
           <div className="app-sidebar">
             <MediaLibrary />

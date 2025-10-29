@@ -1,0 +1,360 @@
+/* ============================================================================
+   EXPORT PROGRESS STYLES
+   ============================================================================ */
+
+.export-progress-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1001;
+  backdrop-filter: blur(4px);
+}
+
+.export-progress-modal {
+  background: #1a1a1a;
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow: hidden;
+  border: 1px solid #333;
+  animation: export-progress-slide-in 0.3s ease-out;
+}
+
+@keyframes export-progress-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.export-progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #333;
+  background: #2a2a2a;
+}
+
+.export-progress-header h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.export-progress-cancel {
+  background: #dc3545;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.export-progress-cancel:hover:not(:disabled) {
+  background: #c82333;
+}
+
+.export-progress-cancel:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+
+.export-progress-content {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ============================================================================
+   PROGRESS BAR
+   ============================================================================ */
+
+.export-progress-bar-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.export-progress-bar {
+  flex: 1;
+  height: 8px;
+  background: #333;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.export-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #007acc, #00a8ff);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+  position: relative;
+}
+
+.export-progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  animation: export-progress-shimmer 2s infinite;
+}
+
+@keyframes export-progress-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.export-progress-percentage {
+  font-size: 16px;
+  font-weight: 600;
+  color: #ffffff;
+  min-width: 45px;
+  text-align: right;
+}
+
+/* ============================================================================
+   PROGRESS DETAILS
+   ============================================================================ */
+
+.export-progress-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #2a2a2a;
+  border-radius: 8px;
+  border-left: 4px solid #007acc;
+}
+
+.export-progress-step-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #888;
+}
+
+.export-progress-step-value {
+  font-size: 14px;
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.export-progress-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.export-progress-time,
+.export-progress-frames {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.export-progress-time-item,
+.export-progress-frame-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #2a2a2a;
+  border-radius: 6px;
+}
+
+.export-progress-time-label,
+.export-progress-frame-label {
+  font-size: 12px;
+  color: #888;
+  font-weight: 500;
+}
+
+.export-progress-time-value,
+.export-progress-frame-value {
+  font-size: 12px;
+  color: #ffffff;
+  font-weight: 600;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+.export-progress-bitrate,
+.export-progress-position {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #2a2a2a;
+  border-radius: 6px;
+}
+
+.export-progress-bitrate-label,
+.export-progress-position-label {
+  font-size: 12px;
+  color: #888;
+  font-weight: 500;
+}
+
+.export-progress-bitrate-value,
+.export-progress-position-value {
+  font-size: 12px;
+  color: #ffffff;
+  font-weight: 600;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+/* ============================================================================
+   STATUS MESSAGES
+   ============================================================================ */
+
+.export-progress-error,
+.export-progress-success {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 8px;
+  margin-top: 8px;
+}
+
+.export-progress-error {
+  background: #4a1a1a;
+  border: 1px solid #cc4444;
+}
+
+.export-progress-success {
+  background: #1a4a1a;
+  border: 1px solid #44cc44;
+}
+
+.export-progress-error-icon,
+.export-progress-success-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.export-progress-error-message,
+.export-progress-success-message {
+  font-size: 14px;
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.export-progress-error-message {
+  color: #ff6666;
+}
+
+.export-progress-success-message {
+  color: #66ff66;
+}
+
+/* ============================================================================
+   ACTION BUTTONS
+   ============================================================================ */
+
+.export-progress-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 20px 24px;
+  border-top: 1px solid #333;
+  background: #2a2a2a;
+}
+
+.export-progress-button {
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  min-width: 80px;
+}
+
+.export-progress-button-primary {
+  background: #007acc;
+  color: #ffffff;
+}
+
+.export-progress-button-primary:hover {
+  background: #005a9e;
+}
+
+/* ============================================================================
+   RESPONSIVE DESIGN
+   ============================================================================ */
+
+@media (max-width: 600px) {
+  .export-progress-modal {
+    width: 95%;
+    margin: 20px;
+  }
+  
+  .export-progress-header {
+    padding: 16px 20px;
+  }
+  
+  .export-progress-content {
+    padding: 20px;
+  }
+  
+  .export-progress-details {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .export-progress-bitrate,
+  .export-progress-position {
+    grid-column: 1;
+  }
+  
+  .export-progress-actions {
+    padding: 16px 20px;
+  }
+}
+
+/* ============================================================================
+   ANIMATION STATES
+   ============================================================================ */
+
+.export-progress-modal.exporting {
+  border-left: 4px solid #007acc;
+}
+
+.export-progress-modal.error {
+  border-left: 4px solid #dc3545;
+}
+
+.export-progress-modal.success {
+  border-left: 4px solid #28a745;
+}
