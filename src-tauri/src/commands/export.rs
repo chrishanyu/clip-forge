@@ -89,6 +89,8 @@ pub async fn export_timeline(
             duration: clip.duration,
             trim_start: clip.trim_start,
             trim_end: clip.trim_end,
+            track_id: clip.track_id,
+            trimmed_file_path: None, // Will be set during trimming process
         })
         .collect();
 
@@ -122,6 +124,8 @@ pub async fn export_timeline_with_progress(
             duration: clip.duration,
             trim_start: clip.trim_start,
             trim_end: clip.trim_end,
+            track_id: clip.track_id,
+            trimmed_file_path: None, // Will be set during trimming process
         })
         .collect();
 
@@ -160,6 +164,8 @@ pub async fn estimate_export_info(request: ExportTimelineRequest) -> CommandResu
             duration: clip.duration,
             trim_start: clip.trim_start,
             trim_end: clip.trim_end,
+            track_id: clip.track_id,
+            trimmed_file_path: None, // Will be set during trimming process
         })
         .collect();
 
