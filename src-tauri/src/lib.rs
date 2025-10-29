@@ -6,6 +6,7 @@
 
 mod commands;
 mod ffmpeg;
+mod recording;
 
 // Re-export command modules
 use commands::file_ops::{
@@ -32,6 +33,14 @@ use commands::project::{
 
 use commands::project_import::{
     delete_project_asset, get_project_asset_path, import_video_to_project, list_project_assets,
+};
+
+use commands::recording::{
+    get_available_screens, get_available_cameras, start_recording, stop_recording,
+    pause_recording, resume_recording, get_recording_progress, get_recording_session,
+    check_screen_recording_permission, request_screen_recording_permission,
+    check_camera_permission, request_camera_permission,
+    check_microphone_permission, request_microphone_permission,
 };
 
 // Legacy command for testing
@@ -89,6 +98,21 @@ pub fn run() {
             get_project_asset_path,
             list_project_assets,
             delete_project_asset,
+            // Recording operations
+            get_available_screens,
+            get_available_cameras,
+            start_recording,
+            stop_recording,
+            pause_recording,
+            resume_recording,
+            get_recording_progress,
+            get_recording_session,
+            check_screen_recording_permission,
+            request_screen_recording_permission,
+            check_camera_permission,
+            request_camera_permission,
+            check_microphone_permission,
+            request_microphone_permission,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

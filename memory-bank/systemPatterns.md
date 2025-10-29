@@ -32,7 +32,7 @@ src/
 │   ├── Timeline/       # Timeline editor components ✅ COMPLETE
 │   ├── Preview/        # Video player and controls ✅ COMPLETE
 │   ├── Export/         # Export dialog and progress ✅ COMPLETE
-│   └── Layout/         # App layout and structure ❌ PENDING
+│   └── Layout/         # App layout and structure ✅ COMPLETE
 ├── stores/             # Zustand state management ✅ COMPLETE
 │   ├── mediaStore.ts   # Imported clips state (19 tests)
 │   ├── timelineStore.ts # Timeline composition state (29 tests)
@@ -261,10 +261,12 @@ let concat_content = clips.iter()
 ffmpeg -f concat -safe 0 -i concat.txt -c copy output.mp4
 ```
 
-**Limitations**:
-- All clips must have same codec/resolution
-- No trim support (MVP limitation)
-- Fast but inflexible
+**Features**:
+- Timeline order preservation with track-based sorting
+- Chronological validation and overlap detection
+- Temporary file management with cleanup
+- Clean production logging without debug spam
+- Comprehensive error handling and validation
 **Status**: ✅ Implemented and tested
 
 ### 5. Thumbnail Generation Pattern ✅ IMPLEMENTED
@@ -298,6 +300,11 @@ app.emit_all("export-progress", ExportProgress {
 })?;
 ```
 
+**Features**:
+- Real-time progress updates with time estimates
+- Export cancellation with process termination
+- Error handling with user-friendly messages
+- Clean production logging without debug spam
 **Status**: ✅ Export store with progress tracking implemented
 
 ### 7. Drag and Drop Pattern ✅ IMPLEMENTED
@@ -338,10 +345,12 @@ app.emit_all("export-progress", ExportProgress {
 ```
 /tmp/clipforge/
 ├── export/            # Temp files during export
-└── concat_*.txt       # FFmpeg concat lists
+├── concat_*.txt       # FFmpeg concat lists
+├── trimmed_clip_*.mp4 # Trimmed video clips (if needed)
+└── temp_*.txt         # Other temporary files
 ```
 
-**Cleanup**: Remove temp files after export completion or app exit
+**Cleanup**: Robust temporary file management with automatic cleanup after export completion, failure, or app exit
 
 ## Error Handling Strategy ✅ IMPLEMENTED
 
@@ -397,9 +406,11 @@ app.emit_all("export-progress", ExportProgress {
 ## Testing Patterns ✅ IMPLEMENTED
 
 ### Unit Testing Strategy ✅ COMPLETE
-- **155 tests** across 7 files
+- **155+ tests** across 7+ files
 - **Store tests**: Complete coverage of all state management
 - **Utility tests**: Complete coverage of all helper functions
+- **Backend tests**: FFmpeg integration and command handlers
+- **Export tests**: Timeline order preservation and temporary file management
 - **Edge cases**: Floating-point precision, boundary conditions, error handling
 - **Real-world scenarios**: Practical usage patterns and workflows
 

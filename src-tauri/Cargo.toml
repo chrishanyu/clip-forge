@@ -29,6 +29,13 @@ regex = "1.12.2"
 chrono = { version = "0.4", features = ["serde"] }
 uuid = { version = "1.0", features = ["v4", "serde"] }
 dirs = "5.0"
+lazy_static = "1.4"
+objc = "0.2"
+core-graphics = "0.23"
+core-foundation = "0.9"
+core-foundation-sys = "0.8"
+core-media = "0.2"
+core-video = "0.1"
 
 [dev-dependencies]
 tempfile = "3.8"

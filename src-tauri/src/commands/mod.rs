@@ -10,6 +10,7 @@ pub mod file_ops;
 pub mod metadata;
 pub mod project;
 pub mod project_import;
+pub mod recording;
 
 // ============================================================================
 // COMMON ERROR TYPES
