@@ -58,6 +58,10 @@ export const TimeRuler: React.FC<TimeRulerProps> = ({
       isMajor: boolean;
     }> = [];
 
+    // Track header width offset (must match .track-header width in CSS)
+    // Note: .track-header uses box-sizing: border-box, so 200px includes padding and border
+    const TRACK_HEADER_WIDTH = 200;
+
     // Calculate appropriate time intervals based on zoom level
     let interval: number;
     let majorInterval: number;
@@ -89,8 +93,9 @@ export const TimeRuler: React.FC<TimeRulerProps> = ({
     }
 
     // Generate markers based on actual timeline duration
+    // Add track header offset to align with track content
     for (let time = 0; time <= timelineDuration; time += interval) {
-      const x = time * pixelsPerSecond;
+      const x = (time * pixelsPerSecond) + TRACK_HEADER_WIDTH;
       const isMajor = time % majorInterval === 0;
       const label = formatTime(time);
       

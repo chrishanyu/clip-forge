@@ -30,7 +30,12 @@ export const PlayheadIndicator: React.FC<PlayheadIndicatorProps> = ({
   // CALCULATIONS
   // ============================================================================
 
-  const playheadX = playhead * pixelsPerSecond;
+  // Track header width offset (must match .track-header width in CSS)
+  // Note: .track-header uses box-sizing: border-box, so 200px includes padding and border
+  const TRACK_HEADER_WIDTH = 200;
+  
+  // Calculate playhead position accounting for track header offset
+  const playheadX = (playhead * pixelsPerSecond) + TRACK_HEADER_WIDTH;
 
   // ============================================================================
   // DRAG HANDLING

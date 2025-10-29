@@ -286,9 +286,31 @@ export const useVideoPlayback = (): UseVideoPlaybackReturn => {
   }, [tracks]);
 
   /**
-   * Update video source when switching to a different clip
+   * Get the next clip after a given time position (gap-skipping)
    */
-  const updateVideoSource = useCallback((clip: TimelineClip | null) => {
+  const getNextClipAfterTime = useCallback((time: number): TimelineClip | null => {
+    let nextClip: TimelineClip | null = null;
+    let earliestStartTime = Infinity;
+
+    for (const track of tracks) {
+      for (const clip of track.clips) {
+        // Find clips that start after the given time
+        if (clip.startTime > time && clip.startTime < earliestStartTime) {
+          nextClip = clip;
+          earliestStartTime = clip.startTime;
+        }
+      }
+    }
+
+    return nextClip;
+  }, [tracks]);
+
+  /**
+   * Update video source when switching to a different clip
+   * @param clip - The clip to load
+   * @param targetPlayhead - Optional playhead time to seek to (for gap-skipping)
+   */
+  const updateVideoSource = useCallback((clip: TimelineClip | null, targetPlayhead?: number) => {
     if (clip) {
       const mediaClip = getClipById(clip.mediaClipId);
       if (mediaClip) {
@@ -303,7 +325,9 @@ export const useVideoPlayback = (): UseVideoPlaybackReturn => {
           videoRef.current.load();
           
           // Calculate the time within the clip
-          const clipTime = playhead - clip.startTime + clip.trimStart;
+          // Use targetPlayhead if provided (for gap-skipping), otherwise use current playhead
+          const effectivePlayhead = targetPlayhead !== undefined ? targetPlayhead : playhead;
+          const clipTime = effectivePlayhead - clip.startTime + clip.trimStart;
           videoRef.current.currentTime = Math.max(0, clipTime);
         }
       }
@@ -318,15 +342,38 @@ export const useVideoPlayback = (): UseVideoPlaybackReturn => {
   }, [playhead, getClipById]);
 
   /**
-   * Sync video with current timeline state
+   * Sync video with current timeline state with gap-skipping
    */
   const syncVideoWithTimeline = useCallback(() => {
     const activeClip = getActiveClipAtTime(playhead);
     
     if (activeClip && activeClip !== currentClip) {
+      // Switch to new clip
       updateVideoSource(activeClip);
     } else if (!activeClip && currentClip) {
-      updateVideoSource(null);
+      // No clip at current position (was playing a clip) - implement gap skipping
+      const nextClip = getNextClipAfterTime(playhead);
+      
+      if (nextClip) {
+        // Jump to the start of the next clip
+        setPlayhead(nextClip.startTime);
+        // Pass the target playhead to avoid stale closure issues
+        updateVideoSource(nextClip, nextClip.startTime);
+      } else {
+        // No more clips - clear video
+        updateVideoSource(null);
+      }
+    } else if (!activeClip && !currentClip && isPlaying) {
+      // No clip at current position and nothing loaded - find first available clip when starting playback
+      const nextClip = getNextClipAfterTime(playhead - 0.01); // -0.01 to handle edge case at clip boundaries
+      
+      if (nextClip) {
+        // Jump to the start of the next clip
+        setPlayhead(nextClip.startTime);
+        // Pass the target playhead to avoid stale closure issues
+        updateVideoSource(nextClip, nextClip.startTime);
+      }
+      // If no clips exist at all, playback just won't start
     } else if (activeClip && activeClip === currentClip && videoRef.current) {
       // Same clip, but ensure video is at correct position
       const video = videoRef.current;
@@ -338,7 +385,7 @@ export const useVideoPlayback = (): UseVideoPlaybackReturn => {
         video.currentTime = Math.max(0, expectedClipTime);
       }
     }
-  }, [playhead, currentClip, getActiveClipAtTime, updateVideoSource]);
+  }, [playhead, currentClip, isPlaying, getActiveClipAtTime, getNextClipAfterTime, updateVideoSource, setPlayhead]);
 
   // ============================================================================
   // PLAYBACK CONTROL HANDLERS
@@ -479,21 +526,21 @@ export const useVideoPlayback = (): UseVideoPlaybackReturn => {
   }, [currentClip, playhead, setPlayhead, isPlaying]);
 
   /**
-   * Handle video ended - move to next clip or end of timeline
+   * Handle video ended - move to next clip or end of timeline (with gap-skipping)
    */
   const handleVideoEnded = useCallback(() => {
     if (!currentClip) return;
     
-    // Move to next clip or end of timeline
-    const nextClip = getActiveClipAtTime(currentClip.startTime + currentClip.duration);
+    // Use gap-skipping to find the next clip after current one ends
+    const nextClip = getNextClipAfterTime(currentClip.startTime + currentClip.duration - 0.01);
     if (nextClip) {
       setPlayhead(nextClip.startTime);
     } else {
-      // End of timeline
+      // End of timeline - pause playback
       pause();
       setPlayhead(currentClip.startTime + currentClip.duration);
     }
-  }, [currentClip, getActiveClipAtTime, setPlayhead, pause]);
+  }, [currentClip, getNextClipAfterTime, setPlayhead, pause]);
 
   // ============================================================================
   // REQUESTANIMATIONFRAME LOOP FOR SMOOTH SYNCHRONIZATION

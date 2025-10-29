@@ -107,11 +107,15 @@ export const Timeline: React.FC<TimelineProps> = ({ className = '' }) => {
   const mouseToTimelineTime = useCallback((clientX: number): number => {
     if (!timelineRef.current) return 0;
     
+    // Track header width offset (must match .track-header width in CSS)
+    // Note: .track-header uses box-sizing: border-box, so 200px includes padding and border
+    const TRACK_HEADER_WIDTH = 200;
+    
     const rect = timelineRef.current.getBoundingClientRect();
     const scrollLeft = timelineRef.current.scrollLeft || 0;
     
-    // Calculate relative X position accounting for scroll
-    const relativeX = (clientX - rect.left) + scrollLeft;
+    // Calculate relative X position accounting for scroll and track header offset
+    const relativeX = (clientX - rect.left) + scrollLeft - TRACK_HEADER_WIDTH;
     
     // Convert pixels to time
     const time = pixelsToTime(relativeX);

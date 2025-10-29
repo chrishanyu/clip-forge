@@ -367,7 +367,7 @@ export const TimelineClip: React.FC<TimelineClipProps> = ({
         }}
         onMouseDown={handleMouseDown}
         onClick={(e) => {
-          console.log('[TimelineClip] Preventing click propagation to timeline');
+          // Prevent timeline click handler from moving playhead when clicking on clip
           e.stopPropagation();
         }}
       >

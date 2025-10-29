@@ -48,16 +48,13 @@ export const TimelineTrack: React.FC<TimelineTrackProps> = ({
         // Calculate position relative to content area (not including header)
         // and add scroll position to get actual timeline position
         const relativeX = (x - rect.left) + scrollLeft;
-        const startTime = Math.max(0, relativeX / pixelsPerSecond);
+        let startTime = Math.max(0, relativeX / pixelsPerSecond);
         
-        console.log('[TimelineTrack] Drop calculation:', {
-          mouseX: x,
-          rectLeft: rect.left,
-          scrollLeft,
-          relativeX,
-          startTime,
-          pixelsPerSecond
-        });
+        // Snap to start if dropped within 2 seconds of the beginning
+        const SNAP_TO_START_THRESHOLD = 2; // seconds
+        if (startTime < SNAP_TO_START_THRESHOLD) {
+          startTime = 0;
+        }
         
         onDrop?.(track.id, startTime, clip);
       }
