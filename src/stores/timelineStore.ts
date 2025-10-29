@@ -11,11 +11,14 @@ interface TimelineStore {
   tracks: TimelineTrack[];
   playhead: number;              // Current playback position in seconds
   isPlaying: boolean;            // Whether video is currently playing
-  zoom: number;                  // Timeline zoom level (1x, 2x, 5x, 10x, 20x)
   selectedClipId: string | null; // Currently selected clip ID
   snapToGrid: boolean;           // Whether to snap clips to grid
   snapInterval: number;          // Snap interval in seconds
   error: AppError | null;
+  
+  // Computed Timeline Dimensions
+  contentEndTime: number;        // Rightmost clip end time across all tracks
+  timelineDuration: number;      // Calculated timeline duration (min 60s, includes buffer)
   
   // Actions - Playback
   setPlayhead: (time: number) => void;
@@ -40,12 +43,6 @@ interface TimelineStore {
   deleteTrack: (trackId: string) => void;
   updateTrack: (trackId: string, updates: Partial<TimelineTrack>) => void;
   
-  // Actions - Zoom
-  setZoom: (zoom: number) => void;
-  zoomIn: () => void;
-  zoomOut: () => void;
-  resetZoom: () => void;
-  
   // Actions - Snap to Grid
   setSnapToGrid: (enabled: boolean) => void;
   toggleSnapToGrid: () => void;
@@ -63,9 +60,6 @@ interface TimelineStore {
   
   // Computed values
   totalDuration: number;
-  maxZoom: number;
-  minZoom: number;
-  availableZoomLevels: number[];
 }
 
 // ============================================================================
@@ -82,6 +76,40 @@ const calculateTotalDuration = (tracks: TimelineTrack[]): number => {
   return Math.max(
     ...allClips.map((clip) => clip.startTime + clip.duration)
   );
+};
+
+/**
+ * Calculate timeline dimensions (contentEndTime and timelineDuration)
+ * Used for canvas-based timeline architecture
+ */
+const calculateTimelineDimensions = (tracks: TimelineTrack[]): {
+  contentEndTime: number;
+  timelineDuration: number;
+} => {
+  const MIN_VISIBLE_DURATION = 60; // Always show at least 60 seconds
+  const BUFFER_AFTER_CONTENT = 30; // 30 seconds of empty space after last clip
+  
+  const allClips = tracks.flatMap((track) => track.clips);
+  
+  // Calculate the rightmost point of any clip
+  const contentEndTime = allClips.length === 0 
+    ? 0 
+    : Math.max(...allClips.map((clip) => clip.startTime + clip.duration));
+  
+  // Timeline duration = max(minimum, content + buffer)
+  const timelineDuration = Math.max(
+    MIN_VISIBLE_DURATION,
+    contentEndTime + BUFFER_AFTER_CONTENT
+  );
+  
+  console.log('[TimelineStore] Timeline dimensions calculated:', {
+    numClips: allClips.length,
+    contentEndTime,
+    timelineDuration,
+    buffer: BUFFER_AFTER_CONTENT
+  });
+  
+  return { contentEndTime, timelineDuration };
 };
 
 // ============================================================================
@@ -112,11 +140,14 @@ export const useTimelineStore = create<TimelineStore>()(
       ],
       playhead: 0,
       isPlaying: false,
-      zoom: 1,
       selectedClipId: null,
       snapToGrid: true,
       snapInterval: 1, // 1 second snap interval
       error: null,
+      
+      // Timeline dimensions (empty timeline shows 60s minimum)
+      contentEndTime: 0,
+      timelineDuration: 60,
       
       // Actions - Playback
       setPlayhead: (time: number) => {
@@ -203,9 +234,13 @@ export const useTimelineStore = create<TimelineStore>()(
                 : t
             );
             
+            const dimensions = calculateTimelineDimensions(updatedTracks);
+            
             return {
               tracks: updatedTracks,
               totalDuration: calculateTotalDuration(updatedTracks),
+              contentEndTime: dimensions.contentEndTime,
+              timelineDuration: dimensions.timelineDuration,
               error: null,
             };
           },
@@ -222,9 +257,13 @@ export const useTimelineStore = create<TimelineStore>()(
               clips: track.clips.filter((clip) => clip.id !== clipId),
             }));
             
+            const dimensions = calculateTimelineDimensions(updatedTracks);
+            
             return {
               tracks: updatedTracks,
               totalDuration: calculateTotalDuration(updatedTracks),
+              contentEndTime: dimensions.contentEndTime,
+              timelineDuration: dimensions.timelineDuration,
               selectedClipId: state.selectedClipId === clipId ? null : state.selectedClipId,
             };
           },
@@ -286,9 +325,13 @@ export const useTimelineStore = create<TimelineStore>()(
               };
             });
             
+            const dimensions = calculateTimelineDimensions(updatedTracks);
+            
             return { 
               tracks: updatedTracks,
               totalDuration: calculateTotalDuration(updatedTracks),
+              contentEndTime: dimensions.contentEndTime,
+              timelineDuration: dimensions.timelineDuration,
             };
           },
           false,
@@ -319,9 +362,13 @@ export const useTimelineStore = create<TimelineStore>()(
               ),
             }));
             
+            const dimensions = calculateTimelineDimensions(updatedTracks);
+            
             return { 
               tracks: updatedTracks,
               totalDuration: calculateTotalDuration(updatedTracks),
+              contentEndTime: dimensions.contentEndTime,
+              timelineDuration: dimensions.timelineDuration,
             };
           },
           false,
@@ -347,9 +394,13 @@ export const useTimelineStore = create<TimelineStore>()(
               };
             });
             
+            const dimensions = calculateTimelineDimensions(updatedTracks);
+            
             return {
               tracks: updatedTracks,
               totalDuration: calculateTotalDuration(updatedTracks),
+              contentEndTime: dimensions.contentEndTime,
+              timelineDuration: dimensions.timelineDuration,
             };
           },
           false,
@@ -427,33 +478,6 @@ export const useTimelineStore = create<TimelineStore>()(
         );
       },
       
-      // Actions - Zoom
-      setZoom: (zoom: number) => {
-        const state = get();
-        const clampedZoom = Math.max(state.minZoom, Math.min(zoom, state.maxZoom));
-        set({ zoom: clampedZoom }, false, 'timelineStore/setZoom');
-      },
-      
-      zoomIn: () => {
-        const state = get();
-        const currentIndex = state.availableZoomLevels.indexOf(state.zoom);
-        const nextIndex = Math.min(currentIndex + 1, state.availableZoomLevels.length - 1);
-        const newZoom = state.availableZoomLevels[nextIndex];
-        state.setZoom(newZoom);
-      },
-      
-      zoomOut: () => {
-        const state = get();
-        const currentIndex = state.availableZoomLevels.indexOf(state.zoom);
-        const prevIndex = Math.max(currentIndex - 1, 0);
-        const newZoom = state.availableZoomLevels[prevIndex];
-        state.setZoom(newZoom);
-      },
-      
-      resetZoom: () => {
-        set({ zoom: 1 }, false, 'timelineStore/resetZoom');
-      },
-      
       // Actions - Snap to Grid
       setSnapToGrid: (enabled: boolean) => {
         set({ snapToGrid: enabled }, false, 'timelineStore/setSnapToGrid');
@@ -509,9 +533,6 @@ export const useTimelineStore = create<TimelineStore>()(
       
       // Computed values (as regular properties, not getters)
       totalDuration: 0,
-      maxZoom: 20,
-      minZoom: 1,
-      availableZoomLevels: [1, 2, 5, 10, 20],
     }),
     {
       name: 'timeline-store',
@@ -527,7 +548,6 @@ export const useTimelineStore = create<TimelineStore>()(
 export const useTracks = () => useTimelineStore((state) => state.tracks);
 export const usePlayhead = () => useTimelineStore((state) => state.playhead);
 export const useIsPlaying = () => useTimelineStore((state) => state.isPlaying);
-export const useZoom = () => useTimelineStore((state) => state.zoom);
 export const useSelectedClipId = () => useTimelineStore((state) => state.selectedClipId);
 export const useSnapToGrid = () => useTimelineStore((state) => state.snapToGrid);
 export const useSnapInterval = () => useTimelineStore((state) => state.snapInterval);
@@ -536,9 +556,6 @@ export const useTimelineError = () => useTimelineStore((state) => state.error);
 export const useTimelineStats = () =>
   useTimelineStore((state) => ({
     totalDuration: state.totalDuration,
-    maxZoom: state.maxZoom,
-    minZoom: state.minZoom,
-    availableZoomLevels: state.availableZoomLevels,
   }));
 
 // ============================================================================
@@ -558,16 +575,12 @@ export const useTimelineActions = () =>
     addClipToTrack: state.addClipToTrack,
     removeClip: state.removeClip,
     moveClip: state.moveClip,
-  trimClip: state.trimClip,
-  selectClip: state.selectClip,
-  removeDuplicateClips: state.removeDuplicateClips,
+    trimClip: state.trimClip,
+    selectClip: state.selectClip,
+    removeDuplicateClips: state.removeDuplicateClips,
     createTrack: state.createTrack,
     deleteTrack: state.deleteTrack,
     updateTrack: state.updateTrack,
-    setZoom: state.setZoom,
-    zoomIn: state.zoomIn,
-    zoomOut: state.zoomOut,
-    resetZoom: state.resetZoom,
     setSnapToGrid: state.setSnapToGrid,
     toggleSnapToGrid: state.toggleSnapToGrid,
     setSnapInterval: state.setSnapInterval,

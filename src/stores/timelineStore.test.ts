@@ -38,7 +38,6 @@ describe('TimelineStore', () => {
       tracks: [],
       playhead: 0,
       isPlaying: false,
-      zoom: 1,
       selectedClipId: null,
       error: null,
     });
@@ -50,7 +49,6 @@ describe('TimelineStore', () => {
       expect(state.tracks).toEqual([]);
       expect(state.playhead).toBe(0);
       expect(state.isPlaying).toBe(false);
-      expect(state.zoom).toBe(1);
       expect(state.selectedClipId).toBe(null);
       expect(state.error).toBe(null);
     });
@@ -58,9 +56,6 @@ describe('TimelineStore', () => {
     it('should have correct computed values initially', () => {
       const state = useTimelineStore.getState();
       expect(state.totalDuration).toBe(0);
-      expect(state.maxZoom).toBe(20);
-      expect(state.minZoom).toBe(1);
-      expect(state.availableZoomLevels).toEqual([1, 2, 5, 10, 20]);
     });
   });
 
@@ -279,44 +274,6 @@ describe('TimelineStore', () => {
       const track = state.tracks.find(t => t.id === trackId);
       expect(track?.name).toBe('Updated Track');
       expect(track?.isMuted).toBe(true);
-    });
-  });
-
-  describe('Zoom Controls', () => {
-    it('should set zoom level', () => {
-      const { setZoom } = useTimelineStore.getState();
-      
-      setZoom(5);
-      expect(useTimelineStore.getState().zoom).toBe(5);
-    });
-
-    it('should clamp zoom to valid range', () => {
-      const { setZoom } = useTimelineStore.getState();
-      
-      setZoom(100); // Too high
-      expect(useTimelineStore.getState().zoom).toBe(20); // Max zoom
-      
-      setZoom(0.5); // Too low
-      expect(useTimelineStore.getState().zoom).toBe(1); // Min zoom
-    });
-
-    it('should zoom in and out', () => {
-      const { zoomIn, zoomOut, setZoom } = useTimelineStore.getState();
-      
-      setZoom(2);
-      zoomIn();
-      expect(useTimelineStore.getState().zoom).toBe(5);
-      
-      zoomOut();
-      expect(useTimelineStore.getState().zoom).toBe(2);
-    });
-
-    it('should reset zoom', () => {
-      const { setZoom, resetZoom } = useTimelineStore.getState();
-      
-      setZoom(10);
-      resetZoom();
-      expect(useTimelineStore.getState().zoom).toBe(1);
     });
   });
 

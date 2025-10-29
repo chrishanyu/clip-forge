@@ -169,6 +169,11 @@ export const TimelineClip: React.FC<TimelineClipProps> = ({
   const handleMouseMove = useCallback((event: MouseEvent) => {
     if (!isDragging || !clipRef.current) return;
     
+    // POSITIONING STRATEGY: Delta-based (relative movement)
+    // This approach is scroll-independent because we calculate the change in position
+    // from the initial drag point, not absolute coordinates. This differs from drop
+    // zones which need to account for scroll position since they convert absolute
+    // mouse coordinates to timeline positions.
     const deltaX = event.clientX - dragStartX;
     const deltaTime = deltaX / pixelsPerSecond;
     const rawStartTime = Math.max(0, dragStartTime + deltaTime);

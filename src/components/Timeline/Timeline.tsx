@@ -1,10 +1,9 @@
-import React, { useRef, useEffect, useCallback, useState } from 'react';
+import React, { useRef, useEffect, useCallback, useState, useMemo } from 'react';
 import { useTimelineStore } from '@/stores/timelineStore';
 import { createTimelineClip } from '@/types';
 import { TimeRuler } from './TimeRuler';
 import { TimelineTracks } from './TimelineTracks';
 import { PlayheadIndicator } from './PlayheadIndicator';
-import { ZoomControls } from './ZoomControls';
 import './Timeline.css';
 
 // ============================================================================
@@ -16,6 +15,16 @@ export interface TimelineProps {
 }
 
 // ============================================================================
+// TIMELINE CONFIGURATION
+// ============================================================================
+
+const TIMELINE_CONFIG = {
+  MIN_VISIBLE_DURATION: 60,    // Always show at least 60 seconds
+  BUFFER_AFTER_CONTENT: 30,    // 30 seconds of empty space after last clip
+  PIXELS_PER_SECOND: 10        // Fixed pixels per second (10px = 1 second)
+} as const;
+
+// ============================================================================
 // TIMELINE COMPONENT
 // ============================================================================
 
@@ -24,44 +33,56 @@ export const Timeline: React.FC<TimelineProps> = ({ className = '' }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartX, setDragStartX] = useState(0);
   const [scrollStartX, setScrollStartX] = useState(0);
+  const [viewportWidth, setViewportWidth] = useState(1200);
 
   // Timeline store
   const {
     playhead,
-    zoom,
-    setZoom,
-    zoomIn,
-    zoomOut,
-    resetZoom,
     setPlayhead,
     addClipToTrack,
     snapToGrid,
     toggleSnapToGrid,
     removeDuplicateClips,
+    timelineDuration,
   } = useTimelineStore();
-
-  // ============================================================================
-  // TIMELINE CONSTANTS
-  // ============================================================================
-
-  const PIXELS_PER_SECOND = 100; // Base pixels per second
-  const MIN_ZOOM = 0.1;
-  const MAX_ZOOM = 10;
-  const ZOOM_STEP = 0.2;
 
   // ============================================================================
   // TIMELINE CALCULATIONS
   // ============================================================================
 
   /**
-   * Get the current pixels per second based on zoom level
+   * Calculate timeline canvas width based on content duration
+   * This is the actual pixel width of the scrollable timeline area
+   * Minimum width ensures timeline is always at least as wide as the viewport
+   */
+  const canvasWidth = useMemo(() => {
+    const contentWidth = timelineDuration * TIMELINE_CONFIG.PIXELS_PER_SECOND;
+    
+    // Use full viewport width as minimum (track header is inside the tracks, not overlaying)
+    const minWidth = Math.max(600, viewportWidth); // Minimum 600px to ensure usability
+    
+    const width = Math.max(minWidth, contentWidth);
+    
+    console.log('[Timeline] Canvas width calculated:', {
+      timelineDuration,
+      contentWidth,
+      viewportWidth,
+      minWidth,
+      finalWidth: width
+    });
+    return width;
+  }, [timelineDuration, viewportWidth]);
+
+  /**
+   * Get the current pixels per second (fixed, no zoom)
    */
   const getPixelsPerSecond = useCallback(() => {
-    return PIXELS_PER_SECOND * zoom;
-  }, [zoom]);
+    return TIMELINE_CONFIG.PIXELS_PER_SECOND;
+  }, []);
 
   /**
    * Convert time to pixel position
+   * NOTE: This returns absolute pixel position in timeline coordinate space
    */
   const timeToPixels = useCallback((time: number) => {
     return time * getPixelsPerSecond();
@@ -69,10 +90,34 @@ export const Timeline: React.FC<TimelineProps> = ({ className = '' }) => {
 
   /**
    * Convert pixel position to time
+   * NOTE: Input should be in timeline coordinate space (not viewport coordinates)
    */
   const pixelsToTime = useCallback((pixels: number) => {
     return pixels / getPixelsPerSecond();
   }, [getPixelsPerSecond]);
+
+  /**
+   * Convert mouse viewport coordinates to timeline time position
+   * Accounts for scroll position
+   * 
+   * CRITICAL: This is the canonical way to convert mouse events to timeline positions
+   * Used by: click handler, drop zones
+   * NOT used by: drag operations (which use delta-based positioning)
+   */
+  const mouseToTimelineTime = useCallback((clientX: number): number => {
+    if (!timelineRef.current) return 0;
+    
+    const rect = timelineRef.current.getBoundingClientRect();
+    const scrollLeft = timelineRef.current.scrollLeft || 0;
+    
+    // Calculate relative X position accounting for scroll
+    const relativeX = (clientX - rect.left) + scrollLeft;
+    
+    // Convert pixels to time
+    const time = pixelsToTime(relativeX);
+    
+    return Math.max(0, time);
+  }, [pixelsToTime]);
 
   // ============================================================================
   // EFFECTS
@@ -82,6 +127,22 @@ export const Timeline: React.FC<TimelineProps> = ({ className = '' }) => {
   useEffect(() => {
     removeDuplicateClips();
   }, [removeDuplicateClips]);
+
+  // Update viewport width on mount and resize
+  useEffect(() => {
+    const updateViewportWidth = () => {
+      if (timelineRef.current) {
+        setViewportWidth(timelineRef.current.clientWidth);
+      }
+    };
+
+    // Set initial viewport width
+    updateViewportWidth();
+
+    // Update on window resize
+    window.addEventListener('resize', updateViewportWidth);
+    return () => window.removeEventListener('resize', updateViewportWidth);
+  }, []);
 
   // ============================================================================
   // DROP HANDLING
@@ -115,19 +176,21 @@ export const Timeline: React.FC<TimelineProps> = ({ className = '' }) => {
   // ============================================================================
 
   /**
-   * Handle mouse wheel scrolling (zoom)
+   * Handle touchpad/mouse wheel scrolling (horizontal scroll)
    */
   const handleWheel = useCallback((event: WheelEvent) => {
+    if (!timelineRef.current) return;
+    
+    // Prevent default to handle scrolling ourselves
     event.preventDefault();
     
-    const delta = event.deltaY;
-    const zoomFactor = delta > 0 ? 1 - ZOOM_STEP : 1 + ZOOM_STEP;
-    const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zoom * zoomFactor));
+    // Use deltaX for horizontal scroll, deltaY for vertical scroll
+    // Most touchpads will send deltaX for horizontal gestures
+    // For vertical wheel on mouse, convert to horizontal scroll
+    const scrollAmount = event.deltaX !== 0 ? event.deltaX : event.deltaY;
     
-    if (newZoom !== zoom) {
-      setZoom(newZoom);
-    }
-  }, [zoom, setZoom]);
+    timelineRef.current.scrollLeft += scrollAmount;
+  }, []);
 
   /**
    * Handle mouse down for dragging
@@ -165,21 +228,16 @@ export const Timeline: React.FC<TimelineProps> = ({ className = '' }) => {
    * Handle timeline click to seek
    */
   const handleTimelineClick = useCallback((event: React.MouseEvent) => {
-    if (!timelineRef.current) return;
-    
-    const rect = timelineRef.current.getBoundingClientRect();
-    const clickX = event.clientX - rect.left + timelineRef.current.scrollLeft;
-    const clickTime = pixelsToTime(clickX);
-    
-    setPlayhead(Math.max(0, clickTime));
-  }, [pixelsToTime, setPlayhead]);
+    const clickTime = mouseToTimelineTime(event.clientX);
+    setPlayhead(clickTime);
+  }, [mouseToTimelineTime, setPlayhead]);
 
   // ============================================================================
   // EFFECTS
   // ============================================================================
 
 
-  // Add wheel event listener for zoom
+  // Add wheel event listener for horizontal scrolling
   useEffect(() => {
     const timeline = timelineRef.current;
     if (!timeline) return;
@@ -218,27 +276,16 @@ export const Timeline: React.FC<TimelineProps> = ({ className = '' }) => {
 
   return (
     <div className={`timeline ${className}`}>
-      {/* Timeline Header */}
-      <div className="timeline-header">
-        <ZoomControls
-          zoom={zoom}
-          onZoomIn={zoomIn}
-          onZoomOut={zoomOut}
-          onResetZoom={resetZoom}
-          snapToGrid={snapToGrid}
-          onToggleSnap={toggleSnapToGrid}
-        />
-      </div>
-
       {/* Timeline Container */}
       <div className="timeline-container">
         {/* Time Ruler */}
         <TimeRuler
           pixelsPerSecond={getPixelsPerSecond()}
+          timelineDuration={timelineDuration}
           onTimeClick={setPlayhead}
         />
 
-        {/* Timeline Content */}
+        {/* Timeline Content (Scrollable Viewport) */}
         <div
           ref={timelineRef}
           className="timeline-content"
@@ -246,16 +293,22 @@ export const Timeline: React.FC<TimelineProps> = ({ className = '' }) => {
           onClick={handleTimelineClick}
           style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
         >
-          {/* Playhead Indicator */}
-          <PlayheadIndicator
-            pixelsPerSecond={getPixelsPerSecond()}
-          />
+          {/* Timeline Canvas (Explicit width container for all timeline elements) */}
+          <div 
+            className="timeline-canvas"
+            style={{ width: `${canvasWidth}px` }}
+          >
+            {/* Playhead Indicator */}
+            <PlayheadIndicator
+              pixelsPerSecond={getPixelsPerSecond()}
+            />
 
-          {/* Timeline Tracks */}
-          <TimelineTracks
-            pixelsPerSecond={getPixelsPerSecond()}
-            onDrop={handleTrackDrop}
-          />
+            {/* Timeline Tracks */}
+            <TimelineTracks
+              pixelsPerSecond={getPixelsPerSecond()}
+              onDrop={handleTrackDrop}
+            />
+          </div>
         </div>
       </div>
     </div>
