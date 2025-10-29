@@ -351,17 +351,49 @@ mod tests {
     #[test]
     fn test_import_video_response_serialization() {
         let response = ImportVideoResponse {
-            success: true,
-            message: "Success".to_string(),
-            file_path: "/path/to/video.mp4".to_string(),
+            clip: MediaClip {
+                id: "test-id".to_string(),
+                filepath: "/path/to/video.mp4".to_string(),
+                filename: "video.mp4".to_string(),
+                created_at: "2024-01-01T00:00:00Z".to_string(),
+                thumbnail_path: "/path/to/thumbnail.jpg".to_string(),
+                metadata: VideoMetadata {
+                    duration: 30.0,
+                    width: 1920,
+                    height: 1080,
+                    fps: 30.0,
+                    bitrate: 5000000,
+                    file_size: 1024000,
+                    codec: "h264".to_string(),
+                    format: "mp4".to_string(),
+                    has_audio: true,
+                    audio_codec: Some("aac".to_string()),
+                    audio_bitrate: Some(128000),
+                },
+            },
+            metadata: VideoMetadata {
+                duration: 30.0,
+                width: 1920,
+                height: 1080,
+                fps: 30.0,
+                bitrate: 5000000,
+                file_size: 1024000,
+                codec: "h264".to_string(),
+                format: "mp4".to_string(),
+                has_audio: true,
+                audio_codec: Some("aac".to_string()),
+                audio_bitrate: Some(128000),
+            },
+            thumbnail_path: "/path/to/thumbnail.jpg".to_string(),
         };
 
         let json = serde_json::to_string(&response).unwrap();
         let deserialized: ImportVideoResponse = serde_json::from_str(&json).unwrap();
 
-        assert_eq!(response.success, deserialized.success);
-        assert_eq!(response.message, deserialized.message);
-        assert_eq!(response.file_path, deserialized.file_path);
+        assert_eq!(response.clip.id, deserialized.clip.id);
+        assert_eq!(response.clip.filepath, deserialized.clip.filepath);
+        assert_eq!(response.metadata.duration, deserialized.metadata.duration);
+        assert_eq!(response.thumbnail_path, deserialized.thumbnail_path);
     }
 
     #[test]
