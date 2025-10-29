@@ -1,0 +1,37 @@
+/* ============================================================================
+   DRAG OVERLAY COMPONENT STYLES
+   ============================================================================ */
+
+.drag-overlay {
+  position: fixed;
+  pointer-events: none;
+  z-index: 10000;
+  transform: translate(-50%, -50%);
+}
+
+.drag-overlay-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background-color: rgba(59, 130, 246, 0.95);
+  color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.drag-icon {
+  font-size: 18px;
+}
+
+.drag-filename {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+

@@ -37,21 +37,3 @@ export const filterValidVideoFileObjects = (files: File[]): File[] => {
   return files.filter(isValidVideoFileObject);
 };
 
-/**
- * Get file extension from a file path
- */
-export const getFileExtension = (filePath: string): string => {
-  const lastDotIndex = filePath.lastIndexOf('.');
-  return lastDotIndex !== -1 ? filePath.substring(lastDotIndex).toLowerCase() : '';
-};
-
-/**
- * Get filename without extension from a file path
- */
-export const getFilenameWithoutExtension = (filePath: string): string => {
-  const lastSlashIndex = filePath.lastIndexOf('/');
-  const lastDotIndex = filePath.lastIndexOf('.');
-  const startIndex = lastSlashIndex !== -1 ? lastSlashIndex + 1 : 0;
-  const endIndex = lastDotIndex !== -1 ? lastDotIndex : filePath.length;
-  return filePath.substring(startIndex, endIndex);
-};

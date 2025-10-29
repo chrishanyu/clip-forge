@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Toast, ToastType } from '@/components/Toast/Toast';
+import { Toast } from '@/components/Toast/Toast';
 
 // ============================================================================
 // TOAST STORE

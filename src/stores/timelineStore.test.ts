@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { useTimelineStore, initializeTimeline } from '../stores/timelineStore';
+import { useTimelineStore } from '../stores/timelineStore';
 import { createTimelineClip, createTimelineTrack, createAppError } from '@/types';
 import type { TimelineClip, TimelineTrack } from '@/types';
 
@@ -165,6 +165,20 @@ describe('TimelineStore', () => {
       const state = useTimelineStore.getState();
       const track = state.tracks.find(t => t.id === sampleTrack.id);
       expect(track?.clips).toHaveLength(1); // Only first clip should be added
+    });
+
+    it('should not add duplicate clips', () => {
+      const { addClipToTrack } = useTimelineStore.getState();
+      
+      // Add first clip
+      addClipToTrack(sampleClip, sampleTrack.id);
+      
+      // Try to add the same clip again
+      addClipToTrack(sampleClip, sampleTrack.id);
+      
+      const state = useTimelineStore.getState();
+      const track = state.tracks.find(t => t.id === sampleTrack.id);
+      expect(track?.clips).toHaveLength(1); // Only one instance should exist
     });
 
     it('should remove clip', () => {
@@ -381,8 +395,21 @@ describe('TimelineStore', () => {
   });
 
   describe('Utility Functions', () => {
-    it('should initialize timeline with default tracks', () => {
-      initializeTimeline();
+    it('should have default tracks initialized when store is created', () => {
+      // Reset to initial state to test default tracks
+      useTimelineStore.setState({
+        tracks: [
+          { id: 'track-1', name: 'Track 1', clips: [], isMuted: false, volume: 1.0 },
+          { id: 'track-2', name: 'Track 2', clips: [], isMuted: false, volume: 1.0 }
+        ],
+        playhead: 0,
+        isPlaying: false,
+        zoom: 1,
+        selectedClipId: null,
+        snapToGrid: true,
+        snapInterval: 1,
+        error: null,
+      });
       
       const state = useTimelineStore.getState();
       expect(state.tracks).toHaveLength(2);

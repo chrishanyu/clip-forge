@@ -18,6 +18,7 @@
   transition: all 0.2s ease;
   cursor: pointer;
   border: 2px solid transparent;
+  user-select: none;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -33,6 +34,15 @@
 
 .clip-card:active {
   transform: translateY(0);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.clip-card[draggable="true"] {
+  cursor: grab;
+}
+
+.clip-card[draggable="true"]:active {
+  cursor: grabbing;
 }
 
 .clip-card.selected {
@@ -156,6 +166,7 @@
   opacity: 0;
   transition: opacity 0.2s ease;
   z-index: 3;
+  pointer-events: none; /* Allow drag events to pass through */
 }
 
 .clip-card:hover .clip-overlay {
@@ -180,6 +191,7 @@
   cursor: pointer;
   transition: all 0.2s ease;
   color: var(--color-background, #1F2937);
+  pointer-events: auto; /* Re-enable pointer events for buttons */
 }
 
 .overlay-btn:hover {

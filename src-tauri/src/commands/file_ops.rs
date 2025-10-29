@@ -4,13 +4,15 @@
 // This module handles file import operations, including validation,
 // file system operations, and integration with the media store.
 
-use crate::commands::{CommandResult, CommandError, validate_file_path, is_supported_video_format, get_file_size};
+use crate::commands::{
+    get_file_size, is_supported_video_format, validate_file_path, CommandError, CommandResult,
+};
 use crate::ffmpeg::probe::{extract_video_metadata, ExtractMetadataRequest, VideoMetadata};
 use crate::ffmpeg::thumbnail::{generate_thumbnail, GenerateThumbnailRequest};
+use chrono;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 use uuid::Uuid;
-use chrono;
 
 // ============================================================================
 // DATA STRUCTURES
@@ -86,39 +88,43 @@ pub async fn import_video_file(
     request: ImportVideoRequest,
 ) -> CommandResult<ImportVideoResponse> {
     let file_path = request.file_path;
-    
+
     // Validate file path
     validate_file_path(&file_path)?;
-    
+
     // Check if file is a supported video format
     if !is_supported_video_format(&file_path) {
-        return Err(CommandError::unsupported_format(
-            format!("Unsupported video format: {}", file_path)
-        ));
+        return Err(CommandError::unsupported_format(format!(
+            "Unsupported video format: {}",
+            file_path
+        )));
     }
-    
+
     // Get file size
     let file_size = get_file_size(&file_path)?;
-    
+
     // Check file size limit (100MB for MVP)
     const MAX_FILE_SIZE: u64 = 100 * 1024 * 1024; // 100MB
     if file_size > MAX_FILE_SIZE {
-        return Err(CommandError::validation_error(
-            format!("File too large: {}MB (max: 100MB)", file_size / (1024 * 1024))
-        ));
+        return Err(CommandError::validation_error(format!(
+            "File too large: {}MB (max: 100MB)",
+            file_size / (1024 * 1024)
+        )));
     }
-    
+
     // Extract video metadata using FFmpeg
     let metadata_response = extract_video_metadata(
         app_handle.clone(),
         ExtractMetadataRequest {
             file_path: file_path.clone(),
-        }
-    ).await?;
-    
-    let metadata = metadata_response.metadata
-        .ok_or_else(|| CommandError::ffmpeg_error("Failed to extract video metadata".to_string()))?;
-    
+        },
+    )
+    .await?;
+
+    let metadata = metadata_response.metadata.ok_or_else(|| {
+        CommandError::ffmpeg_error("Failed to extract video metadata".to_string())
+    })?;
+
     // Generate thumbnail
     let thumbnail_response = generate_thumbnail(
         app_handle.clone(),
@@ -127,20 +133,22 @@ pub async fn import_video_file(
             timestamp: Some(1.0), // Extract frame at 1 second
             width: Some(320),
             height: Some(180),
-        }
-    ).await?;
-    
+        },
+    )
+    .await?;
+
     // Extract thumbnail path
-    let thumbnail_path = thumbnail_response.thumbnail_path
+    let thumbnail_path = thumbnail_response
+        .thumbnail_path
         .ok_or_else(|| CommandError::ffmpeg_error("Failed to generate thumbnail".to_string()))?;
-    
+
     // Get filename from path
     let filename = Path::new(&file_path)
         .file_name()
         .and_then(|name| name.to_str())
         .unwrap_or("unknown")
         .to_string();
-    
+
     // Create MediaClip
     let clip = create_media_clip(
         Uuid::new_v4().to_string(),
@@ -149,7 +157,7 @@ pub async fn import_video_file(
         metadata.clone(),
         thumbnail_path.clone(),
     );
-    
+
     Ok(ImportVideoResponse {
         clip,
         metadata,
@@ -159,17 +167,15 @@ pub async fn import_video_file(
 
 /// Validate a file path and return information about it
 #[tauri::command]
-pub async fn validate_file(
-    request: ValidateFileRequest,
-) -> CommandResult<ValidateFileResponse> {
+pub async fn validate_file(request: ValidateFileRequest) -> CommandResult<ValidateFileResponse> {
     let file_path = request.file_path;
-    
+
     // Try to validate the file
     match validate_file_path(&file_path) {
         Ok(_) => {
             let is_supported = is_supported_video_format(&file_path);
             let file_size = get_file_size(&file_path).unwrap_or(0);
-            
+
             Ok(ValidateFileResponse {
                 is_valid: true,
                 is_supported,
@@ -177,22 +183,18 @@ pub async fn validate_file(
                 error_message: None,
             })
         }
-        Err(error) => {
-            Ok(ValidateFileResponse {
-                is_valid: false,
-                is_supported: false,
-                file_size: 0,
-                error_message: Some(error.message),
-            })
-        }
+        Err(error) => Ok(ValidateFileResponse {
+            is_valid: false,
+            is_supported: false,
+            file_size: 0,
+            error_message: Some(error.message),
+        }),
     }
 }
 
 /// Get information about a file without importing it
 #[tauri::command]
-pub async fn get_file_info(
-    request: ValidateFileRequest,
-) -> CommandResult<ValidateFileResponse> {
+pub async fn get_file_info(request: ValidateFileRequest) -> CommandResult<ValidateFileResponse> {
     validate_file(request).await
 }
 
@@ -256,19 +258,19 @@ pub fn get_filename_with_extension(file_path: &str) -> Option<String> {
 pub fn format_file_size(bytes: u64) -> String {
     const UNITS: &[&str] = &["B", "KB", "MB", "GB"];
     const THRESHOLD: u64 = 1024;
-    
+
     if bytes == 0 {
         return "0 B".to_string();
     }
-    
+
     let mut size = bytes as f64;
     let mut unit_index = 0;
-    
+
     while size >= THRESHOLD as f64 && unit_index < UNITS.len() - 1 {
         size /= THRESHOLD as f64;
         unit_index += 1;
     }
-    
+
     if unit_index == 0 {
         format!("{} {}", bytes, UNITS[unit_index])
     } else {
@@ -284,16 +286,17 @@ pub fn is_absolute_path(file_path: &str) -> bool {
 /// Resolve relative path to absolute path
 pub fn resolve_absolute_path(file_path: &str) -> CommandResult<String> {
     let path = std::path::Path::new(file_path);
-    
+
     if path.is_absolute() {
         Ok(file_path.to_string())
     } else {
         // Convert to absolute path
-        let current_dir = std::env::current_dir()
-            .map_err(|e| CommandError::io_error(format!("Failed to get current directory: {}", e)))?;
-        
+        let current_dir = std::env::current_dir().map_err(|e| {
+            CommandError::io_error(format!("Failed to get current directory: {}", e))
+        })?;
+
         let absolute_path = current_dir.join(path);
-        
+
         Ok(absolute_path.to_string_lossy().to_string())
     }
 }
@@ -314,10 +317,10 @@ mod tests {
         let request = ImportVideoRequest {
             file_path: "/path/to/video.mp4".to_string(),
         };
-        
+
         let json = serde_json::to_string(&request).unwrap();
         let deserialized: ImportVideoRequest = serde_json::from_str(&json).unwrap();
-        
+
         assert_eq!(request.file_path, deserialized.file_path);
     }
 
@@ -328,10 +331,10 @@ mod tests {
             message: "Success".to_string(),
             file_path: "/path/to/video.mp4".to_string(),
         };
-        
+
         let json = serde_json::to_string(&response).unwrap();
         let deserialized: ImportVideoResponse = serde_json::from_str(&json).unwrap();
-        
+
         assert_eq!(response.success, deserialized.success);
         assert_eq!(response.message, deserialized.message);
         assert_eq!(response.file_path, deserialized.file_path);
@@ -342,10 +345,10 @@ mod tests {
         let request = ValidateFileRequest {
             file_path: "/path/to/video.mp4".to_string(),
         };
-        
+
         let json = serde_json::to_string(&request).unwrap();
         let deserialized: ValidateFileRequest = serde_json::from_str(&json).unwrap();
-        
+
         assert_eq!(request.file_path, deserialized.file_path);
     }
 
@@ -357,10 +360,10 @@ mod tests {
             file_size: 1024,
             error_message: None,
         };
-        
+
         let json = serde_json::to_string(&response).unwrap();
         let deserialized: ValidateFileResponse = serde_json::from_str(&json).unwrap();
-        
+
         assert_eq!(response.is_valid, deserialized.is_valid);
         assert_eq!(response.is_supported, deserialized.is_supported);
         assert_eq!(response.file_size, deserialized.file_size);
@@ -389,7 +392,7 @@ mod tests {
         let absolute_path = "/absolute/path/video.mp4";
         let result = resolve_absolute_path(absolute_path).unwrap();
         assert_eq!(result, absolute_path);
-        
+
         // Test relative path
         let relative_path = "relative/video.mp4";
         let result = resolve_absolute_path(relative_path).unwrap();
@@ -401,12 +404,12 @@ mod tests {
     fn test_get_file_size_with_temp_file() {
         let temp_dir = tempdir().unwrap();
         let file_path = temp_dir.path().join("test.txt");
-        
+
         // Create a test file
         let mut file = File::create(&file_path).unwrap();
         file.write_all(b"test content").unwrap();
         drop(file);
-        
+
         // Test get_file_size
         let size = get_file_size(file_path.to_str().unwrap()).unwrap();
         assert_eq!(size, 12); // "test content" is 12 bytes
@@ -422,12 +425,12 @@ mod tests {
     fn test_validate_file_path_with_temp_file() {
         let temp_dir = tempdir().unwrap();
         let file_path = temp_dir.path().join("test.txt");
-        
+
         // Create a test file
         let mut file = File::create(&file_path).unwrap();
         file.write_all(b"test content").unwrap();
         drop(file);
-        
+
         // Test validate_file_path
         let result = validate_file_path(file_path.to_str().unwrap());
         assert!(result.is_ok());
@@ -437,7 +440,7 @@ mod tests {
     fn test_validate_file_path_nonexistent() {
         let result = validate_file_path("/nonexistent/file.txt");
         assert!(result.is_err());
-        
+
         if let Err(error) = result {
             assert_eq!(error.error_type, "validation_error");
             assert!(error.message.contains("File does not exist"));
@@ -449,7 +452,7 @@ mod tests {
         let temp_dir = tempdir().unwrap();
         let result = validate_file_path(temp_dir.path().to_str().unwrap());
         assert!(result.is_err());
-        
+
         if let Err(error) = result {
             assert_eq!(error.error_type, "validation_error");
             assert!(error.message.contains("Path is not a file"));

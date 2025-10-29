@@ -1,0 +1,356 @@
+/* ============================================================================
+   PLAYER CONTROLS COMPONENT
+   ============================================================================ */
+
+.player-controls {
+  background-color: var(--color-surface, #374151);
+  border-top: 1px solid var(--color-border, #4B5563);
+  padding: var(--spacing-md, 16px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm, 8px);
+  user-select: none;
+}
+
+.controls-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md, 16px);
+  flex-wrap: wrap;
+}
+
+/* ============================================================================
+   CONTROL BUTTONS
+   ============================================================================ */
+
+.control-button {
+  background: none;
+  border: none;
+  color: var(--color-text, #F9FAFB);
+  cursor: pointer;
+  padding: var(--spacing-sm, 8px);
+  border-radius: var(--border-radius-md, 8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.control-button:hover:not(:disabled) {
+  background-color: var(--color-surface-hover, #4B5563);
+  color: var(--color-primary, #3B82F6);
+}
+
+.control-button:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.control-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.control-button:focus {
+  outline: 2px solid var(--color-primary, #3B82F6);
+  outline-offset: 2px;
+}
+
+/* ============================================================================
+   PLAY BUTTON
+   ============================================================================ */
+
+.play-button {
+  width: 48px;
+  height: 48px;
+  background-color: var(--color-primary, #3B82F6);
+  color: white;
+  border-radius: 50%;
+  font-size: 18px;
+}
+
+.play-button:hover:not(:disabled) {
+  background-color: var(--color-primary-dark, #2563EB);
+  color: white;
+}
+
+.control-icon {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+}
+
+/* ============================================================================
+   TIME DISPLAY
+   ============================================================================ */
+
+.time-display {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs, 4px);
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: var(--font-size-sm, 14px);
+  color: var(--color-text, #F9FAFB);
+  min-width: 120px;
+}
+
+.current-time {
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-primary, #3B82F6);
+}
+
+.time-separator {
+  color: var(--color-text-secondary, #9CA3AF);
+}
+
+.total-time {
+  color: var(--color-text-secondary, #9CA3AF);
+}
+
+/* ============================================================================
+   SKIP BUTTONS
+   ============================================================================ */
+
+.skip-buttons {
+  display: flex;
+  gap: var(--spacing-xs, 4px);
+}
+
+.skip-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: var(--spacing-sm, 8px) var(--spacing-xs, 4px);
+  min-width: 40px;
+}
+
+.skip-text {
+  font-size: 10px;
+  font-weight: var(--font-weight-medium, 500);
+  color: var(--color-text-secondary, #9CA3AF);
+}
+
+/* ============================================================================
+   VOLUME CONTROL
+   ============================================================================ */
+
+.volume-control {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm, 8px);
+  position: relative;
+}
+
+.volume-button {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+}
+
+.volume-slider {
+  width: 0;
+  opacity: 0;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.volume-slider.visible {
+  width: 100px;
+  opacity: 1;
+}
+
+.volume-track {
+  position: relative;
+  height: 4px;
+  background-color: var(--color-border, #4B5563);
+  border-radius: 2px;
+  cursor: pointer;
+  margin: var(--spacing-sm, 8px) 0;
+}
+
+.volume-fill {
+  height: 100%;
+  background-color: var(--color-primary, #3B82F6);
+  border-radius: 2px;
+  transition: width 0.1s ease;
+}
+
+.volume-thumb {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 12px;
+  height: 12px;
+  background-color: var(--color-primary, #3B82F6);
+  border: 2px solid white;
+  border-radius: 50%;
+  cursor: grab;
+  transition: left 0.1s ease;
+}
+
+.volume-thumb:hover {
+  transform: translate(-50%, -50%) scale(1.2);
+}
+
+.volume-thumb:active {
+  cursor: grabbing;
+}
+
+/* ============================================================================
+   TIMELINE INFO
+   ============================================================================ */
+
+.timeline-info {
+  margin-left: auto;
+  font-size: var(--font-size-sm, 14px);
+  color: var(--color-text-secondary, #9CA3AF);
+}
+
+.timeline-duration {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-weight: var(--font-weight-medium, 500);
+}
+
+.no-content {
+  font-style: italic;
+  opacity: 0.7;
+}
+
+/* ============================================================================
+   PROGRESS BAR
+   ============================================================================ */
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  cursor: pointer;
+  margin-top: var(--spacing-xs, 4px);
+}
+
+.progress-track {
+  position: relative;
+  height: 100%;
+  background-color: var(--color-border, #4B5563);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: var(--color-primary, #3B82F6);
+  border-radius: 4px;
+  transition: width 0.1s ease;
+}
+
+.progress-thumb {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 16px;
+  height: 16px;
+  background-color: var(--color-primary, #3B82F6);
+  border: 3px solid white;
+  border-radius: 50%;
+  cursor: grab;
+  transition: left 0.1s ease;
+  opacity: 0;
+}
+
+.progress-bar:hover .progress-thumb {
+  opacity: 1;
+}
+
+.progress-thumb:hover {
+  transform: translate(-50%, -50%) scale(1.2);
+}
+
+.progress-thumb:active {
+  cursor: grabbing;
+}
+
+/* ============================================================================
+   RESPONSIVE DESIGN
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .player-controls {
+    padding: var(--spacing-sm, 8px);
+  }
+  
+  .controls-row {
+    gap: var(--spacing-sm, 8px);
+  }
+  
+  .play-button {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .control-icon {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .time-display {
+    min-width: 100px;
+    font-size: var(--font-size-xs, 12px);
+  }
+  
+  .skip-button {
+    min-width: 32px;
+    padding: var(--spacing-xs, 4px) 2px;
+  }
+  
+  .volume-slider.visible {
+    width: 80px;
+  }
+  
+  .timeline-info {
+    font-size: var(--font-size-xs, 12px);
+  }
+}
+
+@media (max-width: 480px) {
+  .controls-row {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .timeline-info {
+    margin-left: 0;
+    order: -1;
+    width: 100%;
+    text-align: center;
+  }
+  
+  .volume-control {
+    order: 1;
+  }
+}
+
+/* ============================================================================
+   ACCESSIBILITY
+   ============================================================================ */
+
+.player-controls:focus-within {
+  outline: 2px solid var(--color-primary, #3B82F6);
+  outline-offset: -2px;
+}
+
+/* ============================================================================
+   ANIMATIONS
+   ============================================================================ */
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.control-button:disabled .control-icon {
+  animation: pulse 2s infinite;
+}

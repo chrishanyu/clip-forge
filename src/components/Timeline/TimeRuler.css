@@ -1,0 +1,77 @@
+/* ============================================================================
+   TIME RULER COMPONENT STYLES
+   ============================================================================ */
+
+.time-ruler {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: var(--color-surface, #374151);
+  border-bottom: 1px solid var(--color-border, #4B5563);
+  height: 40px;
+}
+
+.time-ruler-content {
+  position: relative;
+  height: 100%;
+  min-width: 100%;
+}
+
+/* ============================================================================
+   TIME MARKERS
+   ============================================================================ */
+
+.time-marker {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.time-marker:hover {
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+/* Time Tick */
+.time-tick {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1px;
+  height: 100%;
+  background-color: var(--color-border, #4B5563);
+}
+
+.time-marker.major .time-tick {
+  background-color: var(--color-text, #F9FAFB);
+  width: 2px;
+}
+
+/* Time Label */
+.time-label {
+  position: absolute;
+  left: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: var(--font-size-xs, 12px);
+  font-weight: var(--font-weight-medium, 500);
+  color: var(--color-text, #F9FAFB);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* ============================================================================
+   RESPONSIVE DESIGN
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .time-ruler {
+    height: 32px;
+  }
+  
+  .time-label {
+    font-size: 10px;
+    left: 2px;
+  }
+}

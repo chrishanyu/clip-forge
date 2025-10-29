@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useMediaStore } from '@/stores/mediaStore';
-import { useTimelineStore, initializeTimeline } from '@/stores/timelineStore';
+import { useTimelineStore } from '@/stores/timelineStore';
+import { useProjectStore } from '@/stores/projectStore';
 import { useToastStore } from '@/stores/toastStore';
 import { MediaClip, createTimelineClip } from '@/types';
 import { useDragAndDrop, useTauriFileDrop } from '@/hooks';
+import { useDragDropContext } from '@/contexts/DragDropContext';
 import { 
   MediaLibraryHeader, 
   MediaLibraryContent, 
@@ -29,6 +31,7 @@ export type { MediaLibraryProps };
 export const MediaLibrary: React.FC<MediaLibraryProps> = ({ className = '' }) => {
   const { clips, loading, error, importVideo, removeClip } = useMediaStore();
   const { tracks, addClipToTrack } = useTimelineStore();
+  const { currentProject } = useProjectStore();
   const { showError, showSuccess } = useToastStore();
   const totalClips = clips.length;
   const [selectedClipId, setSelectedClipId] = useState<string | null>(null);
@@ -40,6 +43,7 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({ className = '' }) =>
   // Custom hooks
   const { isDragOver, dragHandlers } = useDragAndDrop();
   const { setupTauriFileDrop } = useTauriFileDrop();
+  const { onMouseDown: handleClipMouseDown } = useDragDropContext();
 
   // ============================================================================
   // EVENT HANDLERS
@@ -53,15 +57,13 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({ className = '' }) =>
   const handleClipDoubleClick = (clip: MediaClip) => {
     // Add clip to timeline
     try {
+      console.log('Double-clicked clip:', clip.filename);
+      console.log('Current tracks:', tracks.length);
+      
       // Ensure timeline has tracks initialized
       if (tracks.length === 0) {
-        initializeTimeline();
-        // Get tracks after initialization
-        const updatedTracks = useTimelineStore.getState().tracks;
-        if (updatedTracks.length === 0) {
-          console.error('Failed to initialize timeline tracks');
-          return;
-        }
+        console.error('No tracks available. Timeline should have default tracks.');
+        return;
       }
       
       // Use the first track for MVP
@@ -120,7 +122,7 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({ className = '' }) =>
           
           // Create a temporary clip with loading state
           const tempClip: MediaClip = {
-            id: `temp-${Date.now()}-${Math.random()}`,
+            id: `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             filepath: filePath,
             filename: filePath.split('/').pop() || 'Unknown',
             metadata: {
@@ -143,8 +145,13 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({ className = '' }) =>
           // Add temporary clip to show loading state
           useMediaStore.getState().addClip(tempClip);
           
-          // Import the actual video
-          await importVideo(filePath);
+          // Import the actual video (always use project-based import)
+          if (currentProject?.id) {
+            await importVideo(filePath, currentProject.id);
+          } else {
+            console.warn('No current project available for import');
+            throw new Error('No project available for video import');
+          }
           
           // Remove the temporary clip (the real one will be added by importVideo)
           useMediaStore.getState().removeClip(tempClip.id);
@@ -230,6 +237,7 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({ className = '' }) =>
             onClipClick={handleClipClick}
             onClipDoubleClick={handleClipDoubleClick}
             onClipRightClick={handleClipRightClick}
+            onClipMouseDownForDrag={handleClipMouseDown}
           />
         )}
         

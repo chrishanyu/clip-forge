@@ -23,7 +23,7 @@ interface MediaStore {
   removeClip: (clipId: string) => void;
   updateClip: (clipId: string, updates: Partial<MediaClip>) => void;
   clearClips: () => void;
-  importVideo: (filePath: string) => Promise<void>;
+  importVideo: (filePath: string, projectId?: string) => Promise<void>; // Updated to support project-based imports
   setClipLoading: (clipId: string, isLoading: boolean) => void;
   
   // Getters
@@ -132,7 +132,7 @@ export const useMediaStore = create<MediaStore>()(
         );
       },
       
-      importVideo: async (filePath: string) => {
+      importVideo: async (filePath: string, projectId?: string) => {
         try {
           set({ loading: true, error: null }, false, 'mediaStore/importVideo/start');
           
@@ -144,15 +144,55 @@ export const useMediaStore = create<MediaStore>()(
             throw new Error('File is already imported');
           }
           
-          // Call Tauri command to import the video
-          const result = await invoke<{
-            clip: MediaClip;
-            metadata: VideoMetadata;
-            thumbnailPath: string;
-          }>('import_video_file', { request: { file_path: filePath } });
+          let result;
           
-          // Add the imported clip to the store
-          get().addClip(result.clip);
+          if (projectId) {
+            // Import to project (new architecture)
+            result = await invoke<{
+              clip_id: string;
+              project_file_path: string;
+              metadata: VideoMetadata;
+              thumbnail_path: string;
+            }>('import_video_to_project', { 
+              request: {
+                project_id: projectId,
+                source_file_path: filePath 
+              }
+            });
+            
+            console.log('Import result:', {
+              clip_id: result.clip_id,
+              project_file_path: result.project_file_path,
+              thumbnail_path: result.thumbnail_path,
+              metadata: result.metadata
+            });
+            
+            // Create MediaClip from project import result
+            const clip: MediaClip = {
+              id: result.clip_id,
+              filepath: result.project_file_path,
+              filename: filePath.split('/').pop() || 'Unknown',
+              metadata: {
+                ...result.metadata,
+                thumbnailPath: result.thumbnail_path,
+              },
+              createdAt: new Date().toISOString(),
+              isLoading: false,
+            };
+            
+            console.log('Created clip:', clip);
+            
+            get().addClip(clip);
+          } else {
+            // Legacy import (for backward compatibility)
+            result = await invoke<{
+              clip: MediaClip;
+              metadata: VideoMetadata;
+              thumbnailPath: string;
+            }>('import_video_file', { request: { file_path: filePath } });
+            
+            get().addClip(result.clip);
+          }
           
           set({ loading: false }, false, 'mediaStore/importVideo/success');
         } catch (error) {
@@ -160,7 +200,7 @@ export const useMediaStore = create<MediaStore>()(
           set(
             { 
               loading: false, 
-              error: createAppError('import', errorMessage, undefined, { filePath })
+              error: createAppError('import', errorMessage, undefined, { filePath, projectId })
             }, 
             false, 
             'mediaStore/importVideo/error'
