@@ -1,0 +1,135 @@
+/* ============================================================================
+   TIMELINE TRACK COMPONENT STYLES
+   ============================================================================ */
+
+
+.timeline-track {
+  display: flex;
+  border-bottom: 1px solid var(--color-border, #4B5563);
+  min-height: 60px;
+  transition: background-color 0.2s ease;
+  cursor: pointer;
+}
+
+.timeline-track:hover {
+  background-color: var(--color-surface-hover, rgba(59, 130, 246, 0.05));
+}
+
+.timeline-track.drag-over {
+  background-color: var(--color-primary-light, rgba(59, 130, 246, 0.1));
+  border: 2px dashed var(--color-primary, #3B82F6);
+}
+
+/* Visual feedback for drop zones during drag */
+.timeline-track[data-drop-zone] {
+  position: relative;
+}
+
+.timeline-track[data-drop-zone]::after {
+  content: 'Drop video clip here';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--color-text-secondary, #9CA3AF);
+  font-size: 14px;
+  font-style: italic;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 1;
+}
+
+body.dragging .timeline-track[data-drop-zone]:hover::after {
+  opacity: 0.7;
+}
+
+/* ============================================================================
+   TRACK HEADER
+   ============================================================================ */
+
+.track-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 200px;
+  min-width: 200px;
+  padding: var(--spacing-sm, 8px) var(--spacing-md, 16px);
+  background-color: var(--color-surface, #374151);
+  border-right: 1px solid var(--color-border, #4B5563);
+}
+
+.track-name {
+  font-size: var(--font-size-sm, 14px);
+  font-weight: var(--font-weight-medium, 500);
+  color: var(--color-text, #F9FAFB);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.track-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs, 4px);
+}
+
+/* ============================================================================
+   TRACK CONTENT
+   ============================================================================ */
+
+.track-content {
+  position: relative;
+  flex: 1;
+  min-height: 60px;
+  background-color: var(--color-background, #1F2937);
+  background-image: 
+    linear-gradient(to right, var(--color-border, #374151) 1px, transparent 1px);
+  background-size: 100px 100%;
+  background-position: 0 0;
+  background-repeat: repeat-x;
+}
+
+/* ============================================================================
+   EMPTY TRACK
+   ============================================================================ */
+
+.track-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 60px;
+  color: var(--color-text-secondary, #9CA3AF);
+  font-size: var(--font-size-sm, 14px);
+  font-style: italic;
+  opacity: 0.6;
+}
+
+/* ============================================================================
+   RESPONSIVE DESIGN
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .track-header {
+    width: 150px;
+    min-width: 150px;
+    padding: var(--spacing-xs, 4px) var(--spacing-sm, 8px);
+  }
+  
+  .track-name {
+    font-size: var(--font-size-xs, 12px);
+  }
+  
+  .timeline-track {
+    min-height: 50px;
+  }
+  
+  .track-content {
+    min-height: 50px;
+  }
+  
+  .track-empty {
+    height: 50px;
+    font-size: var(--font-size-xs, 12px);
+  }
+}

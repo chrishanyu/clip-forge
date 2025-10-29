@@ -1,0 +1,325 @@
+/* ============================================================================
+   VIDEO PLAYER COMPONENT
+   ============================================================================ */
+
+.video-player {
+  width: 100%;
+  height: 100%;
+  background-color: var(--color-background, #1F2937);
+  border-radius: var(--border-radius-md, 8px);
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.video-container {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-surface, #374151);
+  min-height: 200px;
+}
+
+/* ============================================================================
+   VIDEO ELEMENT
+   ============================================================================ */
+
+.video-element {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background-color: #000;
+  border-radius: var(--border-radius-md, 8px);
+}
+
+/* ============================================================================
+   PLACEHOLDER STATE
+   ============================================================================ */
+
+.video-placeholder {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl, 32px);
+  text-align: center;
+  color: var(--color-text-secondary, #9CA3AF);
+  background-color: rgba(0, 0, 0, 0.8);
+  z-index: 10;
+}
+
+.placeholder-icon {
+  font-size: 48px;
+  margin-bottom: var(--spacing-md, 16px);
+  opacity: 0.6;
+}
+
+.placeholder-text {
+  font-size: var(--font-size-lg, 18px);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text, #F9FAFB);
+  margin-bottom: var(--spacing-sm, 8px);
+}
+
+.placeholder-subtext {
+  font-size: var(--font-size-sm, 14px);
+  color: var(--color-text-secondary, #9CA3AF);
+  line-height: 1.5;
+}
+
+/* ============================================================================
+   ERROR STATE
+   ============================================================================ */
+
+.video-error {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.9);
+  color: var(--color-text, #F9FAFB);
+  z-index: 10;
+  padding: var(--spacing-lg, 24px);
+  text-align: center;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.error-icon {
+  font-size: 48px;
+  margin-bottom: var(--spacing-md, 16px);
+  color: var(--color-danger, #EF4444);
+}
+
+.error-message {
+  font-size: var(--font-size-lg, 18px);
+  font-weight: var(--font-weight-medium, 500);
+  color: var(--color-danger, #EF4444);
+  line-height: 1.5;
+  margin-bottom: var(--spacing-sm, 8px);
+}
+
+.error-type {
+  font-size: var(--font-size-sm, 14px);
+  color: var(--color-text-secondary, #9CA3AF);
+  margin-bottom: var(--spacing-md, 16px);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.error-suggestions {
+  margin-bottom: var(--spacing-lg, 24px);
+  text-align: left;
+}
+
+.suggestions-title {
+  font-size: var(--font-size-sm, 14px);
+  font-weight: var(--font-weight-medium, 500);
+  color: var(--color-text, #F9FAFB);
+  margin-bottom: var(--spacing-xs, 4px);
+}
+
+.suggestions-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.suggestion-item {
+  font-size: var(--font-size-sm, 14px);
+  color: var(--color-text-secondary, #9CA3AF);
+  margin-bottom: var(--spacing-xs, 4px);
+  padding-left: var(--spacing-sm, 8px);
+  position: relative;
+}
+
+.suggestion-item::before {
+  content: "•";
+  color: var(--color-primary, #3B82F6);
+  position: absolute;
+  left: 0;
+}
+
+.error-actions {
+  display: flex;
+  gap: var(--spacing-sm, 8px);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.retry-button,
+.dismiss-button {
+  padding: var(--spacing-sm, 8px) var(--spacing-md, 16px);
+  border: none;
+  border-radius: var(--border-radius, 6px);
+  font-size: var(--font-size-sm, 14px);
+  font-weight: var(--font-weight-medium, 500);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.retry-button {
+  background-color: var(--color-primary, #3B82F6);
+  color: white;
+}
+
+.retry-button:hover {
+  background-color: var(--color-primary-dark, #2563EB);
+}
+
+.dismiss-button {
+  background-color: var(--color-gray-600, #4B5563);
+  color: white;
+}
+
+.dismiss-button:hover {
+  background-color: var(--color-gray-700, #374151);
+}
+
+/* ============================================================================
+   LOADING STATE
+   ============================================================================ */
+
+.video-loading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: var(--color-text, #F9FAFB);
+  z-index: 10;
+}
+
+.video-loading .loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top: 3px solid var(--color-primary, #3B82F6);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: var(--spacing-sm, 8px);
+}
+
+.video-loading .loading-text {
+  font-size: var(--font-size-sm, 14px);
+  font-weight: var(--font-weight-medium, 500);
+  color: var(--color-text, #F9FAFB);
+  margin-bottom: var(--spacing-sm, 8px);
+}
+
+.loading-progress {
+  width: 100%;
+  max-width: 200px;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 4px;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: var(--spacing-xs, 4px);
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: var(--color-primary, #3B82F6);
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  font-size: var(--font-size-xs, 12px);
+  color: var(--color-text-secondary, #9CA3AF);
+  text-align: center;
+}
+
+/* ============================================================================
+   RESPONSIVE DESIGN
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .video-placeholder,
+  .video-error {
+    padding: var(--spacing-lg, 24px);
+  }
+  
+  .placeholder-icon,
+  .error-icon {
+    font-size: 36px;
+  }
+  
+  .placeholder-text {
+    font-size: var(--font-size-base, 16px);
+  }
+}
+
+/* ============================================================================
+   ASPECT RATIO MAINTENANCE
+   ============================================================================ */
+
+.video-player {
+  /* Maintain 16:9 aspect ratio */
+  aspect-ratio: 16 / 9;
+}
+
+@media (max-width: 1024px) {
+  .video-player {
+    /* Allow flexible height on smaller screens */
+    aspect-ratio: unset;
+    min-height: 200px;
+  }
+}
+
+/* ============================================================================
+   FOCUS STATES
+   ============================================================================ */
+
+.video-player:focus-within {
+  outline: 2px solid var(--color-primary, #3B82F6);
+  outline-offset: 2px;
+}
+
+.video-element:focus {
+  outline: none;
+}
+
+/* ============================================================================
+   ANIMATIONS
+   ============================================================================ */
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ============================================================================
+   ACCESSIBILITY
+   ============================================================================ */
+
+.video-element {
+  /* Ensure video is accessible */
+  outline: none;
+}
+
+.video-element:focus-visible {
+  outline: 2px solid var(--color-primary, #3B82F6);
+  outline-offset: 2px;
+}

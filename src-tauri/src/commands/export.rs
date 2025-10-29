@@ -4,11 +4,10 @@
 // This module provides Tauri commands for video export operations,
 // acting as a bridge between the frontend and the FFmpeg export module.
 
-use crate::commands::{CommandResult, CommandError};
+use crate::commands::{CommandError, CommandResult};
 use crate::ffmpeg::export::{
-    export_video, export_video_with_progress,
-    ExportVideoRequest, ExportVideoResponse, ExportClip, ExportSettings,
-    validate_export_settings, estimate_export_time, estimate_export_size,
+    estimate_export_size, estimate_export_time, export_video, export_video_with_progress,
+    validate_export_settings, ExportClip, ExportSettings, ExportVideoRequest, ExportVideoResponse,
 };
 use serde::{Deserialize, Serialize};
 
@@ -29,11 +28,11 @@ pub struct ExportTimelineRequest {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TimelineExportClip {
     pub file_path: String,
-    pub start_time: f64,    // Start time in timeline
-    pub duration: f64,      // Duration in timeline
-    pub trim_start: f64,    // Trim start in source video
-    pub trim_end: f64,      // Trim end in source video
-    pub track_id: String,   // Track ID (for future use)
+    pub start_time: f64,  // Start time in timeline
+    pub duration: f64,    // Duration in timeline
+    pub trim_start: f64,  // Trim start in source video
+    pub trim_end: f64,    // Trim end in source video
+    pub track_id: String, // Track ID (for future use)
 }
 
 /// Export progress update
@@ -78,9 +77,10 @@ pub async fn export_timeline(
 ) -> CommandResult<ExportVideoResponse> {
     // Validate export settings
     validate_export_settings(&request.settings)?;
-    
+
     // Convert timeline clips to export clips
-    let export_clips: Vec<ExportClip> = request.timeline_clips
+    let export_clips: Vec<ExportClip> = request
+        .timeline_clips
         .into_iter()
         .map(|clip| ExportClip {
             file_path: clip.file_path,
@@ -90,14 +90,14 @@ pub async fn export_timeline(
             trim_end: clip.trim_end,
         })
         .collect();
-    
+
     // Create export request
     let export_request = ExportVideoRequest {
         clips: export_clips,
         output_path: request.output_path,
         settings: request.settings,
     };
-    
+
     // Execute export
     export_video(app_handle, export_request).await
 }
@@ -110,9 +110,10 @@ pub async fn export_timeline_with_progress(
 ) -> CommandResult<ExportVideoResponse> {
     // Validate export settings
     validate_export_settings(&request.settings)?;
-    
+
     // Convert timeline clips to export clips
-    let export_clips: Vec<ExportClip> = request.timeline_clips
+    let export_clips: Vec<ExportClip> = request
+        .timeline_clips
         .into_iter()
         .map(|clip| ExportClip {
             file_path: clip.file_path,
@@ -122,25 +123,24 @@ pub async fn export_timeline_with_progress(
             trim_end: clip.trim_end,
         })
         .collect();
-    
+
     // Create export request
     let export_request = ExportVideoRequest {
         clips: export_clips,
         output_path: request.output_path,
         settings: request.settings,
     };
-    
+
     // Execute export with progress tracking
     export_video_with_progress(app_handle, export_request).await
 }
 
 /// Estimate export time and file size
 #[tauri::command]
-pub async fn estimate_export_info(
-    request: ExportTimelineRequest,
-) -> CommandResult<ExportEstimate> {
+pub async fn estimate_export_info(request: ExportTimelineRequest) -> CommandResult<ExportEstimate> {
     // Convert timeline clips to export clips
-    let export_clips: Vec<ExportClip> = request.timeline_clips
+    let export_clips: Vec<ExportClip> = request
+        .timeline_clips
         .into_iter()
         .map(|clip| ExportClip {
             file_path: clip.file_path,
@@ -150,12 +150,12 @@ pub async fn estimate_export_info(
             trim_end: clip.trim_end,
         })
         .collect();
-    
+
     // Calculate estimates
     let estimated_time = estimate_export_time(&export_clips, &request.settings);
     let estimated_size = estimate_export_size(&export_clips, &request.settings);
     let total_duration: f64 = export_clips.iter().map(|clip| clip.duration).sum();
-    
+
     Ok(ExportEstimate {
         estimated_time_seconds: estimated_time,
         estimated_file_size_bytes: estimated_size,
@@ -183,28 +183,23 @@ pub async fn validate_export_settings_command(
 
 /// Get export file path from settings
 #[tauri::command]
-pub async fn get_export_file_path(
-    output_dir: String,
-    filename: String,
-) -> CommandResult<String> {
+pub async fn get_export_file_path(output_dir: String, filename: String) -> CommandResult<String> {
     let filename = if filename.ends_with(".mp4") {
         filename
     } else {
         format!("{}.mp4", filename)
     };
-    
+
     let output_path = std::path::Path::new(&output_dir).join(&filename);
     Ok(output_path.to_string_lossy().to_string())
 }
 
 /// Check if export path is valid
 #[tauri::command]
-pub async fn validate_export_path(
-    output_path: String,
-) -> CommandResult<ValidationResult> {
+pub async fn validate_export_path(output_path: String) -> CommandResult<ValidationResult> {
     let path = std::path::Path::new(&output_path);
     let mut errors = Vec::new();
-    
+
     // Check if parent directory exists
     if let Some(parent) = path.parent() {
         if !parent.exists() {
@@ -215,12 +210,12 @@ pub async fn validate_export_path(
     } else {
         errors.push("Invalid output path".to_string());
     }
-    
+
     // Check if file already exists
     if path.exists() {
         errors.push("Output file already exists".to_string());
     }
-    
+
     // Check if filename is valid
     if let Some(filename) = path.file_name() {
         if let Some(filename_str) = filename.to_str() {
@@ -235,7 +230,7 @@ pub async fn validate_export_path(
     } else {
         errors.push("No filename provided".to_string());
     }
-    
+
     Ok(ValidationResult {
         is_valid: errors.is_empty(),
         errors,
@@ -276,19 +271,19 @@ pub struct ValidationResult {
 pub fn format_file_size(bytes: u64) -> String {
     const UNITS: &[&str] = &["B", "KB", "MB", "GB"];
     const THRESHOLD: u64 = 1024;
-    
+
     if bytes == 0 {
         return "0 B".to_string();
     }
-    
+
     let mut size = bytes as f64;
     let mut unit_index = 0;
-    
+
     while size >= THRESHOLD as f64 && unit_index < UNITS.len() - 1 {
         size /= THRESHOLD as f64;
         unit_index += 1;
     }
-    
+
     if unit_index == 0 {
         format!("{} {}", bytes, UNITS[unit_index])
     } else {
@@ -301,7 +296,7 @@ pub fn format_duration(seconds: f64) -> String {
     let hours = (seconds / 3600.0) as u32;
     let minutes = ((seconds % 3600.0) / 60.0) as u32;
     let secs = (seconds % 60.0) as u32;
-    
+
     if hours > 0 {
         format!("{:02}:{:02}:{:02}", hours, minutes, secs)
     } else {
@@ -343,57 +338,70 @@ pub fn get_available_resolutions() -> Vec<String> {
 
 /// Get available export qualities
 pub fn get_available_qualities() -> Vec<String> {
-    vec![
-        "high".to_string(),
-        "medium".to_string(),
-        "low".to_string(),
-    ]
+    vec!["high".to_string(), "medium".to_string(), "low".to_string()]
 }
 
 /// Check if export is possible with given clips
 pub fn can_export_timeline(clips: &[TimelineExportClip]) -> bool {
-    !clips.is_empty() && clips.iter().all(|clip| {
-        !clip.file_path.is_empty() && clip.duration > 0.0
-    })
+    !clips.is_empty()
+        && clips
+            .iter()
+            .all(|clip| !clip.file_path.is_empty() && clip.duration > 0.0)
 }
 
 /// Sort clips by timeline position
-pub fn sort_clips_by_timeline_position(mut clips: Vec<TimelineExportClip>) -> Vec<TimelineExportClip> {
-    clips.sort_by(|a, b| a.start_time.partial_cmp(&b.start_time).unwrap_or(std::cmp::Ordering::Equal));
+pub fn sort_clips_by_timeline_position(
+    mut clips: Vec<TimelineExportClip>,
+) -> Vec<TimelineExportClip> {
+    clips.sort_by(|a, b| {
+        a.start_time
+            .partial_cmp(&b.start_time)
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
     clips
 }
 
 /// Validate timeline clips for export
 pub fn validate_timeline_clips(clips: &[TimelineExportClip]) -> CommandResult<()> {
     if clips.is_empty() {
-        return Err(CommandError::validation_error("No clips to export".to_string()));
+        return Err(CommandError::validation_error(
+            "No clips to export".to_string(),
+        ));
     }
-    
+
     for (index, clip) in clips.iter().enumerate() {
         if clip.file_path.is_empty() {
-            return Err(CommandError::validation_error(
-                format!("Clip {} has empty file path", index + 1)
-            ));
+            return Err(CommandError::validation_error(format!(
+                "Clip {} has empty file path",
+                index + 1
+            )));
         }
-        
+
         if clip.duration <= 0.0 {
-            return Err(CommandError::validation_error(
-                format!("Clip {} has invalid duration: {}", index + 1, clip.duration)
-            ));
+            return Err(CommandError::validation_error(format!(
+                "Clip {} has invalid duration: {}",
+                index + 1,
+                clip.duration
+            )));
         }
-        
+
         if clip.trim_start < 0.0 {
-            return Err(CommandError::validation_error(
-                format!("Clip {} has negative trim start: {}", index + 1, clip.trim_start)
-            ));
+            return Err(CommandError::validation_error(format!(
+                "Clip {} has negative trim start: {}",
+                index + 1,
+                clip.trim_start
+            )));
         }
-        
+
         if clip.trim_end <= clip.trim_start {
-            return Err(CommandError::validation_error(
-                format!("Clip {} has invalid trim range: {} to {}", index + 1, clip.trim_start, clip.trim_end)
-            ));
+            return Err(CommandError::validation_error(format!(
+                "Clip {} has invalid trim range: {} to {}",
+                index + 1,
+                clip.trim_start,
+                clip.trim_end
+            )));
         }
     }
-    
+
     Ok(())
 }

@@ -22,6 +22,8 @@ export type ErrorType =
   | 'file'                      // File system errors
   | 'validation'                // Input validation errors
   | 'network'                   // Network-related errors
+  | 'project'                   // Project management errors
+  | 'timeline'                  // Timeline editing errors
   | 'unknown';                   // Catch-all for unexpected errors
 
 /**

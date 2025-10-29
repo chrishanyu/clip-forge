@@ -28,7 +28,7 @@ describe('Video Calculation Utilities', () => {
     fileSize: 100000000, // 100MB
     codec: 'h264',
     container: 'mp4',
-    createdAt: new Date().toISOString(),
+    thumbnailPath: '/path/to/thumbnail.jpg',
   });
 
   describe('calculateAspectRatio', () => {
@@ -118,7 +118,7 @@ describe('Video Calculation Utilities', () => {
         fileSize: 10000000, // 10MB
         codec: 'mpeg',
         container: 'avi',
-        createdAt: new Date().toISOString(),
+        thumbnailPath: '/path/to/thumbnail.jpg',
       });
       
       const score = calculateQualityScore(lowQualityMetadata);
@@ -182,7 +182,7 @@ describe('Video Calculation Utilities', () => {
         fileSize: 0,
         codec: 'h264',
         container: 'mp4',
-        createdAt: new Date().toISOString(),
+        thumbnailPath: '/path/to/thumbnail.jpg',
       });
       
       const errors = validateVideoMetadata(invalidMetadata);

@@ -13,6 +13,8 @@ interface TimelineStore {
   isPlaying: boolean;            // Whether video is currently playing
   zoom: number;                  // Timeline zoom level (1x, 2x, 5x, 10x, 20x)
   selectedClipId: string | null; // Currently selected clip ID
+  snapToGrid: boolean;           // Whether to snap clips to grid
+  snapInterval: number;          // Snap interval in seconds
   error: AppError | null;
   
   // Actions - Playback
@@ -31,6 +33,7 @@ interface TimelineStore {
   moveClip: (clipId: string, newStartTime: number, newTrackId?: string) => void;
   trimClip: (clipId: string, trimStart: number, trimEnd: number) => void;
   selectClip: (clipId: string | null) => void;
+  removeDuplicateClips: () => void;
   
   // Actions - Track Management
   createTrack: (name: string) => void;
@@ -42,6 +45,11 @@ interface TimelineStore {
   zoomIn: () => void;
   zoomOut: () => void;
   resetZoom: () => void;
+  
+  // Actions - Snap to Grid
+  setSnapToGrid: (enabled: boolean) => void;
+  toggleSnapToGrid: () => void;
+  setSnapInterval: (interval: number) => void;
   
   // Actions - Error Handling
   setError: (error: AppError | null) => void;
@@ -78,7 +86,6 @@ const calculateTotalDuration = (tracks: TimelineTrack[]): number => {
 
 // ============================================================================
 
-const ZOOM_LEVELS = [1, 2, 5, 10, 20] as const;
 const DEFAULT_SKIP_SECONDS = 1;
 const MIN_CLIP_DURATION = 0.1; // Minimum clip duration in seconds
 
@@ -86,15 +93,29 @@ const MIN_CLIP_DURATION = 0.1; // Minimum clip duration in seconds
 // TIMELINE STORE IMPLEMENTATION
 // ============================================================================
 
+// Create default tracks
+const createDefaultTrack = (name: string): TimelineTrack => ({
+  id: `track-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+  name,
+  clips: [],
+  isMuted: false,
+  volume: 1.0,
+});
+
 export const useTimelineStore = create<TimelineStore>()(
   devtools(
     (set, get) => ({
-      // Initial state
-      tracks: [],
+      // Initial state with default tracks
+      tracks: [
+        createDefaultTrack('Track 1'),
+        createDefaultTrack('Track 2'),
+      ],
       playhead: 0,
       isPlaying: false,
       zoom: 1,
       selectedClipId: null,
+      snapToGrid: true,
+      snapInterval: 1, // 1 second snap interval
       error: null,
       
       // Actions - Playback
@@ -148,6 +169,13 @@ export const useTimelineStore = create<TimelineStore>()(
             const track = state.tracks.find((t) => t.id === trackId);
             if (!track) {
               console.error(`Track ${trackId} not found`);
+              return state;
+            }
+            
+            // Check for duplicate clip ID
+            const hasDuplicate = track.clips.some((existingClip) => existingClip.id === clip.id);
+            if (hasDuplicate) {
+              console.warn(`Clip with ID ${clip.id} already exists on track ${trackId}`);
               return state;
             }
             
@@ -315,12 +343,46 @@ export const useTimelineStore = create<TimelineStore>()(
         set({ selectedClipId: clipId }, false, 'timelineStore/selectClip');
       },
       
+      // Actions - Cleanup
+      removeDuplicateClips: () => {
+        set(
+          (state) => {
+            const updatedTracks = state.tracks.map((track) => {
+              const uniqueClips = track.clips.filter((clip, index, array) => 
+                array.findIndex(c => c.id === clip.id) === index
+              );
+              return {
+                ...track,
+                clips: uniqueClips.sort((a, b) => a.startTime - b.startTime),
+              };
+            });
+            
+            return {
+              tracks: updatedTracks,
+              totalDuration: calculateTotalDuration(updatedTracks),
+            };
+          },
+          false,
+          'timelineStore/removeDuplicateClips'
+        );
+      },
+      
       // Actions - Track Management
       createTrack: (name: string) => {
         set(
           (state) => {
+            // Check if track with same name already exists
+            const existingTrack = state.tracks.find(track => track.name === name);
+            if (existingTrack) {
+              console.warn(`Track with name "${name}" already exists`);
+              return state;
+            }
+            
+            // Generate unique ID using timestamp + random number
+            const timestamp = Date.now();
+            const random = Math.floor(Math.random() * 10000);
             const newTrack: TimelineTrack = {
-              id: `track-${Date.now()}`, // Simple ID for MVP
+              id: `track-${timestamp}-${random}`,
               name,
               clips: [],
               isMuted: false,
@@ -402,6 +464,21 @@ export const useTimelineStore = create<TimelineStore>()(
         set({ zoom: 1 }, false, 'timelineStore/resetZoom');
       },
       
+      // Actions - Snap to Grid
+      setSnapToGrid: (enabled: boolean) => {
+        set({ snapToGrid: enabled }, false, 'timelineStore/setSnapToGrid');
+      },
+      
+      toggleSnapToGrid: () => {
+        const state = get();
+        set({ snapToGrid: !state.snapToGrid }, false, 'timelineStore/toggleSnapToGrid');
+      },
+      
+      setSnapInterval: (interval: number) => {
+        const clampedInterval = Math.max(0.1, Math.min(10, interval)); // Between 0.1 and 10 seconds
+        set({ snapInterval: clampedInterval }, false, 'timelineStore/setSnapInterval');
+      },
+      
       // Actions - Error Handling
       setError: (error: AppError | null) => {
         set({ error }, false, 'timelineStore/setError');
@@ -462,6 +539,8 @@ export const usePlayhead = () => useTimelineStore((state) => state.playhead);
 export const useIsPlaying = () => useTimelineStore((state) => state.isPlaying);
 export const useZoom = () => useTimelineStore((state) => state.zoom);
 export const useSelectedClipId = () => useTimelineStore((state) => state.selectedClipId);
+export const useSnapToGrid = () => useTimelineStore((state) => state.snapToGrid);
+export const useSnapInterval = () => useTimelineStore((state) => state.snapInterval);
 export const useTimelineError = () => useTimelineStore((state) => state.error);
 
 export const useTimelineStats = () =>
@@ -489,8 +568,9 @@ export const useTimelineActions = () =>
     addClipToTrack: state.addClipToTrack,
     removeClip: state.removeClip,
     moveClip: state.moveClip,
-    trimClip: state.trimClip,
-    selectClip: state.selectClip,
+  trimClip: state.trimClip,
+  selectClip: state.selectClip,
+  removeDuplicateClips: state.removeDuplicateClips,
     createTrack: state.createTrack,
     deleteTrack: state.deleteTrack,
     updateTrack: state.updateTrack,
@@ -498,6 +578,9 @@ export const useTimelineActions = () =>
     zoomIn: state.zoomIn,
     zoomOut: state.zoomOut,
     resetZoom: state.resetZoom,
+    setSnapToGrid: state.setSnapToGrid,
+    toggleSnapToGrid: state.toggleSnapToGrid,
+    setSnapInterval: state.setSnapInterval,
     setError: state.setError,
     clearError: state.clearError,
   }));
@@ -506,14 +589,7 @@ export const useTimelineActions = () =>
 // UTILITY FUNCTIONS
 // ============================================================================
 
-/**
- * Initialize timeline with default tracks
- */
-export const initializeTimeline = () => {
-  const { createTrack } = useTimelineStore.getState();
-  createTrack('Track 1');
-  createTrack('Track 2');
-};
+// Timeline is now initialized with default tracks in the store
 
 /**
  * Get all clips across all tracks

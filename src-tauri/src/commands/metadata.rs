@@ -5,12 +5,14 @@
 // and thumbnail generation, acting as a bridge between the frontend
 // and the FFmpeg modules.
 
-use crate::commands::{CommandResult, CommandError};
-use crate::ffmpeg::probe::{extract_video_metadata, ExtractMetadataRequest, ExtractMetadataResponse};
+use crate::commands::{CommandError, CommandResult};
+use crate::ffmpeg::probe::{
+    extract_video_metadata, ExtractMetadataRequest, ExtractMetadataResponse,
+};
 use crate::ffmpeg::thumbnail::{
-    generate_thumbnail, generate_multiple_thumbnails, thumbnail_exists, delete_thumbnail,
-    GenerateThumbnailRequest, GenerateThumbnailResponse,
+    delete_thumbnail, generate_multiple_thumbnails, generate_thumbnail, thumbnail_exists,
     GenerateMultipleThumbnailsRequest, GenerateMultipleThumbnailsResponse,
+    GenerateThumbnailRequest, GenerateThumbnailResponse,
 };
 use serde::{Deserialize, Serialize};
 
@@ -70,19 +72,24 @@ pub async fn import_video_with_metadata(
     request: ImportVideoWithMetadataRequest,
 ) -> CommandResult<ImportVideoWithMetadataResponse> {
     let file_path = request.file_path.clone();
-    
+
     // Validate file path first
     crate::commands::validate_file_path(&file_path)?;
-    
+
     let mut metadata = None;
     let mut thumbnail_path = None;
     let mut error_message = None;
-    
+
     // Extract metadata if requested
     if request.extract_metadata {
-        match extract_video_metadata(app_handle.clone(), ExtractMetadataRequest {
-            file_path: file_path.clone(),
-        }).await {
+        match extract_video_metadata(
+            app_handle.clone(),
+            ExtractMetadataRequest {
+                file_path: file_path.clone(),
+            },
+        )
+        .await
+        {
             Ok(response) => {
                 if response.success {
                     metadata = response.metadata;
@@ -95,15 +102,20 @@ pub async fn import_video_with_metadata(
             }
         }
     }
-    
+
     // Generate thumbnail if requested and no error occurred
     if request.generate_thumbnail && error_message.is_none() {
-        match generate_thumbnail(app_handle.clone(), GenerateThumbnailRequest {
-            file_path: file_path.clone(),
-            timestamp: request.thumbnail_timestamp,
-            width: None,
-            height: None,
-        }).await {
+        match generate_thumbnail(
+            app_handle.clone(),
+            GenerateThumbnailRequest {
+                file_path: file_path.clone(),
+                timestamp: request.thumbnail_timestamp,
+                width: None,
+                height: None,
+            },
+        )
+        .await
+        {
             Ok(response) => {
                 if response.success {
                     thumbnail_path = response.thumbnail_path;
@@ -118,9 +130,9 @@ pub async fn import_video_with_metadata(
             }
         }
     }
-    
+
     let success = error_message.is_none();
-    
+
     Ok(ImportVideoWithMetadataResponse {
         success,
         file_path,
@@ -136,9 +148,13 @@ pub async fn get_video_metadata(
     app_handle: tauri::AppHandle,
     request: GetVideoMetadataRequest,
 ) -> CommandResult<ExtractMetadataResponse> {
-    extract_video_metadata(app_handle, ExtractMetadataRequest {
-        file_path: request.file_path,
-    }).await
+    extract_video_metadata(
+        app_handle,
+        ExtractMetadataRequest {
+            file_path: request.file_path,
+        },
+    )
+    .await
 }
 
 /// Generate thumbnail only
@@ -147,12 +163,16 @@ pub async fn generate_video_thumbnail(
     app_handle: tauri::AppHandle,
     request: GenerateThumbnailOnlyRequest,
 ) -> CommandResult<GenerateThumbnailResponse> {
-    generate_thumbnail(app_handle, GenerateThumbnailRequest {
-        file_path: request.file_path,
-        timestamp: request.timestamp,
-        width: request.width,
-        height: request.height,
-    }).await
+    generate_thumbnail(
+        app_handle,
+        GenerateThumbnailRequest {
+            file_path: request.file_path,
+            timestamp: request.timestamp,
+            width: request.width,
+            height: request.height,
+        },
+    )
+    .await
 }
 
 /// Generate multiple thumbnails for a video
@@ -166,28 +186,26 @@ pub async fn generate_video_thumbnails(
 
 /// Check if thumbnail exists
 #[tauri::command]
-pub async fn check_thumbnail_exists(
-    request: CheckThumbnailRequest,
-) -> CommandResult<bool> {
+pub async fn check_thumbnail_exists(request: CheckThumbnailRequest) -> CommandResult<bool> {
     thumbnail_exists(GenerateThumbnailRequest {
         file_path: request.file_path,
         timestamp: request.timestamp,
         width: None,
         height: None,
-    }).await
+    })
+    .await
 }
 
 /// Delete a thumbnail
 #[tauri::command]
-pub async fn delete_video_thumbnail(
-    request: GenerateThumbnailOnlyRequest,
-) -> CommandResult<bool> {
+pub async fn delete_video_thumbnail(request: GenerateThumbnailOnlyRequest) -> CommandResult<bool> {
     delete_thumbnail(GenerateThumbnailRequest {
         file_path: request.file_path,
         timestamp: request.timestamp,
         width: request.width,
         height: request.height,
-    }).await
+    })
+    .await
 }
 
 /// Batch import multiple video files
@@ -197,7 +215,7 @@ pub async fn batch_import_videos(
     file_paths: Vec<String>,
 ) -> CommandResult<Vec<ImportVideoWithMetadataResponse>> {
     let mut results = Vec::new();
-    
+
     for file_path in file_paths {
         let request = ImportVideoWithMetadataRequest {
             file_path: file_path.clone(),
@@ -205,7 +223,7 @@ pub async fn batch_import_videos(
             generate_thumbnail: true,
             thumbnail_timestamp: Some(1.0),
         };
-        
+
         match import_video_with_metadata(app_handle.clone(), request).await {
             Ok(response) => results.push(response),
             Err(error) => {
@@ -219,23 +237,19 @@ pub async fn batch_import_videos(
             }
         }
     }
-    
+
     Ok(results)
 }
 
 /// Get FFmpeg version information
 #[tauri::command]
-pub async fn get_ffmpeg_version(
-    app_handle: tauri::AppHandle,
-) -> CommandResult<String> {
+pub async fn get_ffmpeg_version(app_handle: tauri::AppHandle) -> CommandResult<String> {
     crate::ffmpeg::probe::get_ffmpeg_version(&app_handle).await
 }
 
 /// Check FFmpeg availability
 #[tauri::command]
-pub async fn check_ffmpeg_availability(
-    app_handle: tauri::AppHandle,
-) -> CommandResult<bool> {
+pub async fn check_ffmpeg_availability(app_handle: tauri::AppHandle) -> CommandResult<bool> {
     crate::ffmpeg::probe::check_ffmpeg_probe_availability(&app_handle).await
 }
 
@@ -267,15 +281,15 @@ pub fn generate_timeline_thumbnail_timestamps(duration: f64, count: usize) -> Ve
     if duration <= 0.0 || count == 0 {
         return vec![1.0];
     }
-    
+
     let mut timestamps = Vec::new();
     let interval = duration / (count as f64);
-    
+
     for i in 0..count {
         let timestamp = interval * (i as f64 + 0.5);
         timestamps.push(timestamp);
     }
-    
+
     timestamps
 }
 
@@ -288,19 +302,19 @@ pub fn is_video_file(file_path: &str) -> bool {
 pub async fn get_file_display_info(file_path: &str) -> CommandResult<FileDisplayInfo> {
     let metadata = std::fs::metadata(file_path)
         .map_err(|e| CommandError::io_error(format!("Failed to get file metadata: {}", e)))?;
-    
+
     let filename = std::path::Path::new(file_path)
         .file_name()
         .and_then(|name| name.to_str())
         .unwrap_or("Unknown")
         .to_string();
-    
+
     let extension = std::path::Path::new(file_path)
         .extension()
         .and_then(|ext| ext.to_str())
         .unwrap_or("")
         .to_lowercase();
-    
+
     Ok(FileDisplayInfo {
         filename,
         extension,

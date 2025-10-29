@@ -1,0 +1,80 @@
+/* ============================================================================
+   TIMELINE COMPONENT STYLES
+   ============================================================================ */
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: var(--color-background, #1F2937);
+  border-top: 1px solid var(--color-border, #374151);
+  user-select: none;
+}
+
+/* ============================================================================
+   TIMELINE HEADER
+   ============================================================================ */
+
+.timeline-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-sm, 8px) var(--spacing-md, 16px);
+  background-color: var(--color-surface, #374151);
+  border-bottom: 1px solid var(--color-border, #374151);
+  min-height: 40px;
+}
+
+/* ============================================================================
+   TIMELINE CONTAINER
+   ============================================================================ */
+
+.timeline-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ============================================================================
+   TIMELINE CONTENT
+   ============================================================================ */
+
+.timeline-content {
+  position: relative;
+  flex: 1;
+  overflow: auto;
+  background-color: var(--color-background, #1F2937);
+  background-image: 
+    linear-gradient(to right, var(--color-border, #374151) 1px, transparent 1px);
+  background-size: 100px 100%;
+  background-position: 0 0;
+}
+
+.timeline-content::-webkit-scrollbar {
+  height: 8px;
+}
+
+.timeline-content::-webkit-scrollbar-track {
+  background: var(--color-surface, #374151);
+}
+
+.timeline-content::-webkit-scrollbar-thumb {
+  background: var(--color-border, #4B5563);
+  border-radius: 4px;
+}
+
+.timeline-content::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-secondary, #9CA3AF);
+}
+
+/* ============================================================================
+   RESPONSIVE DESIGN
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .timeline-header {
+    padding: var(--spacing-xs, 4px) var(--spacing-sm, 8px);
+    min-height: 36px;
+  }
+}

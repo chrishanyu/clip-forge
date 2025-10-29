@@ -1,0 +1,81 @@
+/* ============================================================================
+   PLAYHEAD INDICATOR COMPONENT STYLES
+   ============================================================================ */
+
+.playhead-indicator {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 20;
+  pointer-events: auto;
+  cursor: grab;
+}
+
+.playhead-indicator.dragging {
+  cursor: grabbing;
+}
+
+/* ============================================================================
+   PLAYHEAD LINE
+   ============================================================================ */
+
+.playhead-line {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background-color: var(--color-danger, #EF4444);
+  box-shadow: 0 0 4px rgba(239, 68, 68, 0.5);
+}
+
+/* ============================================================================
+   PLAYHEAD HANDLE
+   ============================================================================ */
+
+.playhead-handle {
+  position: absolute;
+  left: -6px;
+  top: 0;
+  width: 12px;
+  height: 12px;
+  background-color: var(--color-danger, #EF4444);
+  border: 2px solid white;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  transform: translateY(-6px);
+}
+
+/* ============================================================================
+   ANIMATION
+   ============================================================================ */
+
+.playhead-indicator {
+  animation: playhead-pulse 2s ease-in-out infinite;
+}
+
+@keyframes playhead-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* ============================================================================
+   RESPONSIVE DESIGN
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .playhead-handle {
+    width: 10px;
+    height: 10px;
+    left: -5px;
+    transform: translateY(-5px);
+  }
+  
+  .playhead-line {
+    width: 1px;
+  }
+}

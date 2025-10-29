@@ -25,5 +25,17 @@ export type {
 export type { AppError, ErrorType } from './error';
 export { createAppError } from './error';
 
+// Project types
+export type { Project, ProjectSettings, ProjectMetadata } from './project';
+export { 
+  createProject, 
+  createProjectSettings, 
+  createProjectMetadata,
+  getProjectDirectory,
+  getAssetsDirectory,
+  getThumbnailsDirectory,
+  generateAssetFilename
+} from './project';
+
 // Common utility types
 export type { TimeRange, Dimensions, Position } from './common';

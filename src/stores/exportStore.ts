@@ -62,7 +62,7 @@ const DEFAULT_EXPORT_SETTINGS: ExportSettings = {
 
 export const useExportStore = create<ExportStore>()(
   devtools(
-    (set, get) => ({
+    (set, _get) => ({
       // Initial state
       isExporting: false,
       progress: { ...DEFAULT_EXPORT_PROGRESS },

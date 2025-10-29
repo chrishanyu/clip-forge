@@ -1,4 +1,5 @@
 import React from 'react';
+import { convertFileSrc } from '@tauri-apps/api/core';
 import { MediaClip } from '@/types';
 import './ClipCard.css';
 
@@ -8,6 +9,7 @@ interface ClipCardProps {
   onClick?: (clip: MediaClip) => void;
   onDoubleClick?: (clip: MediaClip) => void;
   onRightClick?: (clip: MediaClip, event: React.MouseEvent) => void;
+  onMouseDownForDrag?: (clip: MediaClip, event: React.MouseEvent) => void;
   className?: string;
 }
 
@@ -19,6 +21,7 @@ export const ClipCard: React.FC<ClipCardProps> = ({
   onClick,
   onDoubleClick,
   onRightClick,
+  onMouseDownForDrag,
   className = ''
 }) => {
   // ============================================================================
@@ -51,7 +54,11 @@ export const ClipCard: React.FC<ClipCardProps> = ({
   // EVENT HANDLERS
   // ============================================================================
   
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent) => {
+    // Don't handle click if this was part of a drag operation
+    if (e.defaultPrevented) {
+      return;
+    }
     onClick?.(clip);
   };
 
@@ -119,6 +126,18 @@ export const ClipCard: React.FC<ClipCardProps> = ({
       onClick={handleClick}
       onDoubleClick={handleDoubleClick}
       onContextMenu={handleRightClick}
+      onMouseDown={(e) => {
+        // Only handle left mouse button for dragging
+        if (e.button !== 0) return;
+        
+        // Don't start drag if clicking on buttons
+        if ((e.target as HTMLElement).closest('button')) {
+          return;
+        }
+        
+        onMouseDownForDrag?.(clip, e);
+      }}
+      draggable={false}
       role="button"
       tabIndex={0}
       aria-label={`Video clip: ${clip.filename}`}
@@ -126,7 +145,7 @@ export const ClipCard: React.FC<ClipCardProps> = ({
       {/* Thumbnail Section */}
       <div className="clip-thumbnail">
         <img 
-          src={clip.metadata.thumbnailPath} 
+          src={clip.metadata.thumbnailPath ? convertFileSrc(clip.metadata.thumbnailPath) : 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYwIiBoZWlnaHQ9IjkwIiB2aWV3Qm94PSIwIDAgMTYwIDkwIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxNjAiIGhlaWdodD0iOTAiIGZpbGw9IiNmM2Y0ZjYiLz48dGV4dCB4PSI4MCIgeT0iNDUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5YTNhZiIgdGV4dC1hbmNob3I9Im1pZGRsZSI+VmlkZW88L3RleHQ+PC9zdmc+'} 
           alt={clip.filename}
           className="thumbnail-image"
           onError={handleThumbnailError}

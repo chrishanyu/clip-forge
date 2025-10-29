@@ -1,0 +1,64 @@
+/* ============================================================================
+   TIMELINE TRACKS COMPONENT STYLES
+   ============================================================================ */
+
+.timeline-tracks {
+  display: flex;
+  flex-direction: column;
+  min-height: 200px;
+}
+
+/* ============================================================================
+   EMPTY STATE
+   ============================================================================ */
+
+.timeline-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: var(--color-text-secondary, #9CA3AF);
+}
+
+.empty-message {
+  text-align: center;
+}
+
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: var(--spacing-md, 16px);
+  opacity: 0.6;
+}
+
+.empty-text {
+  font-size: var(--font-size-lg, 18px);
+  font-weight: var(--font-weight-medium, 500);
+  margin-bottom: var(--spacing-xs, 4px);
+}
+
+.empty-subtext {
+  font-size: var(--font-size-sm, 14px);
+  opacity: 0.8;
+}
+
+/* ============================================================================
+   RESPONSIVE DESIGN
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .timeline-tracks {
+    min-height: 150px;
+  }
+  
+  .timeline-empty {
+    height: 150px;
+  }
+  
+  .empty-icon {
+    font-size: 36px;
+  }
+  
+  .empty-text {
+    font-size: var(--font-size-base, 16px);
+  }
+}

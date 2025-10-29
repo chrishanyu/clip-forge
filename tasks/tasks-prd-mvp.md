@@ -78,7 +78,7 @@
   - [x] 3.7 Add error handling for unsupported formats, file access issues, and FFmpeg failures
   - [x] 3.8 Write unit tests for FFmpeg integration and command handlers
 
-- [ ] 4.0 Create media library interface with drag-and-drop
+- [x] 4.0 Create media library interface with drag-and-drop
   - [x] 4.1 Create MediaLibrary component with grid layout and empty state
   - [x] 4.2 Implement ImportButton component with native file dialog integration
   - [x] 4.3 Create ClipCard component displaying thumbnails, metadata, and hover effects
@@ -87,28 +87,28 @@
   - [x] 4.6 Implement right-click context menu for clip deletion
   - [x] 4.7 Add loading indicators during import and thumbnail generation
   - [x] 4.8 Handle error states with toast notifications for import failures
-  - [ ] 4.9 Write component tests for MediaLibrary, ImportButton, and ClipCard
+  - [x] 4.9 Write component tests for MediaLibrary, ImportButton, and ClipCard
 
 - [ ] 5.0 Develop video preview player with timeline sync
-  - [ ] 5.1 Create VideoPlayer component with HTML5 video element and custom controls
-  - [ ] 5.2 Implement PlayerControls component (play/pause, time display, volume control)
-  - [ ] 5.3 Create useVideoPlayback hook for managing playback state and timeline sync
-  - [ ] 5.4 Implement video synchronization with timeline playhead position
-  - [ ] 5.5 Add requestAnimationFrame loop for smooth playback updates
-  - [ ] 5.6 Handle video loading states, errors, and codec compatibility issues
+  - [x] 5.1 Create VideoPlayer component with HTML5 video element and custom controls
+  - [x] 5.2 Implement PlayerControls component (play/pause, time display, volume control)
+  - [x] 5.3 Create useVideoPlayback hook for managing playback state and timeline sync
+  - [x] 5.4 Implement video synchronization with timeline playhead position
+  - [x] 5.5 Add requestAnimationFrame loop for smooth playback updates
+  - [x] 5.6 Handle video loading states, errors, and codec compatibility issues
   - [ ] 5.7 Implement 16:9 aspect ratio maintenance and responsive sizing
   - [ ] 5.8 Add playback speed control and mute functionality
   - [ ] 5.9 Write tests for video player components and playback hook
 
 - [ ] 6.0 Implement timeline editor with clip manipulation
-  - [ ] 6.1 Create Timeline container component with horizontal scroll and time ruler
-  - [ ] 6.2 Implement TimelineTrack components for multiple video tracks
-  - [ ] 6.3 Create TimelineClip component with visual positioning and duration display
-  - [ ] 6.4 Implement Playhead component with draggable scrubbing functionality
-  - [ ] 6.5 Add zoom controls and pixel-to-time conversion logic
-  - [ ] 6.6 Implement drag-and-drop from media library to timeline tracks
-  - [ ] 6.7 Add clip dragging within timeline for reordering
-  - [ ] 6.8 Implement trim handles for adjusting clip start/end points
+  - [x] 6.1 Create Timeline container component with horizontal scroll and time ruler
+  - [x] 6.2 Implement TimelineTrack components for multiple video tracks
+  - [x] 6.3 Create TimelineClip component with visual positioning and duration display
+  - [x] 6.4 Implement Playhead component with draggable scrubbing functionality
+  - [x] 6.5 Add zoom controls and pixel-to-time conversion logic
+  - [x] 6.6 Implement drag-and-drop from media library to timeline tracks (mouse-based for Tauri compatibility)
+  - [x] 6.7 Add clip dragging within timeline for reordering
+  - [x] 6.8 Implement trim handles for adjusting clip start/end points
   - [ ] 6.9 Add clip selection, highlighting, and deletion functionality
   - [ ] 6.10 Implement click-to-seek and keyboard shortcuts (spacebar, arrows, home/end)
   - [ ] 6.11 Write comprehensive tests for timeline components and interactions
