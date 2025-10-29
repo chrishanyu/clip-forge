@@ -11,7 +11,7 @@
   border: 1px solid var(--color-primary-dark, #2563EB);
   border-radius: var(--border-radius, 6px);
   cursor: move;
-  transition: all 0.2s ease;
+  transition: all 0.2s ease, border-color 0.15s ease, box-shadow 0.15s ease;
   user-select: none;
   overflow: hidden;
 }
@@ -22,12 +22,15 @@
 }
 
 .timeline-clip.selected {
-  border-color: var(--color-success, #10B981);
-  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
+  border-color: #FF6B35 !important;
+  border-width: 3px !important;
+  box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.4) !important;
+  background: linear-gradient(135deg, #FF6B35, #E55A2B) !important;
 }
 
 .timeline-clip.selected:hover {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3), 0 0 0 2px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3), 0 0 0 2px rgba(255, 107, 53, 0.4);
+  transform: translateY(-1px);
 }
 
 /* ============================================================================

@@ -4,8 +4,8 @@
 - **Name**: ClipForge
 - **Type**: Desktop Video Editor Application
 - **Platform**: macOS (Intel + Apple Silicon)
-- **Status**: Initial Development / Pre-MVP
-- **Version**: 0.1.0
+- **Status**: MVP Development / Core Features Complete
+- **Version**: 0.1.0-mvp-timeline-editor
 
 ## Core Mission
 Build a production-grade native macOS video editor that enables creators to record their screen/webcam, import video clips, arrange them on a timeline, and export professional videos - all within a single desktop application.
@@ -24,8 +24,8 @@ Build a production-grade native macOS video editor that enables creators to reco
 3. ✅ Timeline view showing imported clips as visual blocks
 4. ✅ Video preview player with play/pause
 5. ✅ Basic trim: Set in/out points on a single clip
-6. ✅ Export to MP4 (single clip or simple concatenation)
-7. ✅ Packaged as installable .dmg
+6. 🟡 Export to MP4 (backend ready, UI pending)
+7. 🔴 Packaged as installable .dmg (not tested)
 
 ### Technical Validation
 - App must build with `cargo tauri build`
@@ -42,11 +42,11 @@ Build a production-grade native macOS video editor that enables creators to reco
 ## Scope Boundaries
 
 ### In Scope for MVP
-- Video import and file management
-- Timeline with basic clip manipulation
-- Video preview player
-- Basic trim functionality
-- Simple concatenation export
+- ✅ Video import and file management
+- ✅ Timeline with basic clip manipulation
+- ✅ Video preview player
+- ✅ Basic trim functionality
+- 🟡 Simple concatenation export (backend ready, UI pending)
 
 ### Out of Scope for MVP
 - Recording features (deferred to full submission)
@@ -87,10 +87,10 @@ Build a production-grade native macOS video editor that enables creators to reco
 - **Dependencies**: Minimize external dependencies
 
 ## Success Metrics
-- Functional: All MVP requirements working
+- Functional: 6/7 MVP requirements working (export UI pending)
 - Performance: Meets all performance targets
 - Quality: No crashes during 10-minute usage
-- Packaging: Installable .dmg that works on clean system
+- Packaging: Installable .dmg that works on clean system (not tested)
 
 ## Key Deliverables
 1. Working desktop application (.dmg)

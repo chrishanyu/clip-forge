@@ -36,6 +36,7 @@
     linear-gradient(to right, var(--color-border, #374151) 1px, transparent 1px);
   background-size: 100px 100%;
   background-position: 0 0;
+  outline: none;
 }
 
 .timeline-content::-webkit-scrollbar {

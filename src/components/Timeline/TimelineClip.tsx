@@ -12,6 +12,7 @@ export interface TimelineClipProps {
   clip: TimelineClipType;
   pixelsPerSecond: number;
   className?: string;
+  isSelected?: boolean; // Optional prop for external selection state control
 }
 
 // ============================================================================
@@ -21,7 +22,8 @@ export interface TimelineClipProps {
 export const TimelineClip: React.FC<TimelineClipProps> = ({
   clip,
   pixelsPerSecond,
-  className = ''
+  className = '',
+  isSelected: externalIsSelected
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState<'left' | 'right' | null>(null);
@@ -42,7 +44,7 @@ export const TimelineClip: React.FC<TimelineClipProps> = ({
 
   const clipX = clip.startTime * pixelsPerSecond;
   const clipWidth = clip.duration * pixelsPerSecond;
-  const isSelected = selectedClipId === clip.id;
+  const isSelected = externalIsSelected !== undefined ? externalIsSelected : selectedClipId === clip.id;
   
   // Get the media clip to display its filename
   const mediaClip = getClipById(clip.mediaClipId);
@@ -187,9 +189,11 @@ export const TimelineClip: React.FC<TimelineClipProps> = ({
       return;
     }
     
-    // Mark as moved
+    // Mark as moved and clear selection when dragging starts
     if (!hasMoved) {
       setHasMoved(true);
+      // Clear selection when user starts dragging
+      selectClip(null);
     }
     
     // Update drag preview position
@@ -370,6 +374,8 @@ export const TimelineClip: React.FC<TimelineClipProps> = ({
           // Prevent timeline click handler from moving playhead when clicking on clip
           e.stopPropagation();
         }}
+        data-clip-id={clip.id}
+        data-is-selected={isSelected}
       >
         {/* Clip Content */}
         <div className="clip-content">
@@ -381,25 +387,29 @@ export const TimelineClip: React.FC<TimelineClipProps> = ({
           </div>
         </div>
 
-        {/* Left Resize Handle */}
-        <div
-          className="resize-handle left"
-          onMouseDown={(e) => handleResizeStart(e, 'left')}
-          onClick={(e) => {
-            // Prevent click from propagating to timeline
-            e.stopPropagation();
-          }}
-        />
+        {/* Left Resize Handle - Only show on selected clips */}
+        {isSelected && (
+          <div
+            className="resize-handle left"
+            onMouseDown={(e) => handleResizeStart(e, 'left')}
+            onClick={(e) => {
+              // Prevent click from propagating to timeline
+              e.stopPropagation();
+            }}
+          />
+        )}
 
-        {/* Right Resize Handle */}
-        <div
-          className="resize-handle right"
-          onMouseDown={(e) => handleResizeStart(e, 'right')}
-          onClick={(e) => {
-            // Prevent click from propagating to timeline
-            e.stopPropagation();
-          }}
-        />
+        {/* Right Resize Handle - Only show on selected clips */}
+        {isSelected && (
+          <div
+            className="resize-handle right"
+            onMouseDown={(e) => handleResizeStart(e, 'right')}
+            onClick={(e) => {
+              // Prevent click from propagating to timeline
+              e.stopPropagation();
+            }}
+          />
+        )}
       </div>
     </>
   );

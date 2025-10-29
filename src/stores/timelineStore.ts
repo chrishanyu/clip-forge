@@ -36,6 +36,9 @@ interface TimelineStore {
   moveClip: (clipId: string, newStartTime: number, newTrackId?: string) => void;
   trimClip: (clipId: string, trimStart: number, trimEnd: number, adjustStartTime?: number) => void;
   selectClip: (clipId: string | null) => void;
+  deselectClip: () => void;
+  clearSelection: () => void;
+  deleteSelectedClip: () => void;
   removeDuplicateClips: () => void;
   
   // Actions - Track Management
@@ -57,6 +60,7 @@ interface TimelineStore {
   getTrackById: (trackId: string) => TimelineTrack | undefined;
   getClipsAtTime: (time: number) => TimelineClip[];
   getSelectedClip: () => TimelineClip | undefined;
+  isClipSelected: (clipId: string) => boolean;
   
   // Computed values
   totalDuration: number;
@@ -381,6 +385,36 @@ export const useTimelineStore = create<TimelineStore>()(
         set({ selectedClipId: clipId }, false, 'timelineStore/selectClip');
       },
       
+      deselectClip: () => {
+        set({ selectedClipId: null }, false, 'timelineStore/deselectClip');
+      },
+      
+      clearSelection: () => {
+        set({ selectedClipId: null }, false, 'timelineStore/clearSelection');
+      },
+      
+      deleteSelectedClip: () => {
+        const state = get();
+        if (!state.selectedClipId) {
+          // No clip selected, do nothing
+          console.log('[TimelineStore] Delete key pressed but no clip selected');
+          return;
+        }
+        
+        console.log('[TimelineStore] Delete key pressed, removing selected clip:', {
+          clipId: state.selectedClipId,
+          action: 'deleteSelectedClip'
+        });
+        
+        // Remove the selected clip from timeline
+        state.removeClip(state.selectedClipId);
+        
+        // Clear selection after deletion
+        set({ selectedClipId: null }, false, 'timelineStore/deleteSelectedClip');
+        
+        console.log('[TimelineStore] Clip deleted successfully, selection cleared');
+      },
+      
       // Actions - Cleanup
       removeDuplicateClips: () => {
         set(
@@ -532,6 +566,11 @@ export const useTimelineStore = create<TimelineStore>()(
         return state.getClipById(state.selectedClipId);
       },
       
+      isClipSelected: (clipId: string) => {
+        const state = get();
+        return state.selectedClipId === clipId;
+      },
+      
       // Computed values (as regular properties, not getters)
       totalDuration: 0,
     }),
@@ -578,6 +617,9 @@ export const useTimelineActions = () =>
     moveClip: state.moveClip,
     trimClip: state.trimClip,
     selectClip: state.selectClip,
+    deselectClip: state.deselectClip,
+    clearSelection: state.clearSelection,
+    deleteSelectedClip: state.deleteSelectedClip,
     removeDuplicateClips: state.removeDuplicateClips,
     createTrack: state.createTrack,
     deleteTrack: state.deleteTrack,

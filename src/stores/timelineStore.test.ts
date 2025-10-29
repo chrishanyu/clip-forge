@@ -236,6 +236,115 @@ describe('TimelineStore', () => {
       selectClip(null);
       expect(useTimelineStore.getState().selectedClipId).toBe(null);
     });
+
+    it('should deselect clip using deselectClip action', () => {
+      const { addClipToTrack, selectClip, deselectClip } = useTimelineStore.getState();
+      
+      addClipToTrack(sampleClip, sampleTrack.id);
+      selectClip(sampleClip.id);
+      expect(useTimelineStore.getState().selectedClipId).toBe(sampleClip.id);
+      
+      deselectClip();
+      expect(useTimelineStore.getState().selectedClipId).toBe(null);
+    });
+
+    it('should clear selection using clearSelection action', () => {
+      const { addClipToTrack, selectClip, clearSelection } = useTimelineStore.getState();
+      
+      addClipToTrack(sampleClip, sampleTrack.id);
+      selectClip(sampleClip.id);
+      expect(useTimelineStore.getState().selectedClipId).toBe(sampleClip.id);
+      
+      clearSelection();
+      expect(useTimelineStore.getState().selectedClipId).toBe(null);
+    });
+
+    it('should check if clip is selected using isClipSelected', () => {
+      const { addClipToTrack, selectClip, isClipSelected } = useTimelineStore.getState();
+      
+      addClipToTrack(sampleClip, sampleTrack.id);
+      
+      // Initially no clip selected
+      expect(isClipSelected(sampleClip.id)).toBe(false);
+      
+      // Select the clip
+      selectClip(sampleClip.id);
+      expect(isClipSelected(sampleClip.id)).toBe(true);
+      
+      // Deselect the clip
+      selectClip(null);
+      expect(isClipSelected(sampleClip.id)).toBe(false);
+    });
+
+    it('should only allow one clip to be selected at a time', () => {
+      const { addClipToTrack, selectClip } = useTimelineStore.getState();
+      
+      const clip2 = createTimelineClip('media-clip-2', sampleTrack.id, 20, 5);
+      
+      addClipToTrack(sampleClip, sampleTrack.id);
+      addClipToTrack(clip2, sampleTrack.id);
+      
+      // Select first clip
+      selectClip(sampleClip.id);
+      expect(useTimelineStore.getState().selectedClipId).toBe(sampleClip.id);
+      
+      // Select second clip - should clear first selection
+      selectClip(clip2.id);
+      expect(useTimelineStore.getState().selectedClipId).toBe(clip2.id);
+    });
+
+    it('should clear selection when clip is removed', () => {
+      const { addClipToTrack, selectClip, removeClip } = useTimelineStore.getState();
+      
+      addClipToTrack(sampleClip, sampleTrack.id);
+      selectClip(sampleClip.id);
+      expect(useTimelineStore.getState().selectedClipId).toBe(sampleClip.id);
+      
+      removeClip(sampleClip.id);
+      expect(useTimelineStore.getState().selectedClipId).toBe(null);
+    });
+
+    it('should clear selection when track containing selected clip is deleted', () => {
+      const { addClipToTrack, selectClip, deleteTrack } = useTimelineStore.getState();
+      
+      addClipToTrack(sampleClip, sampleTrack.id);
+      selectClip(sampleClip.id);
+      expect(useTimelineStore.getState().selectedClipId).toBe(sampleClip.id);
+      
+      deleteTrack(sampleTrack.id);
+      expect(useTimelineStore.getState().selectedClipId).toBe(null);
+    });
+
+    it('should delete selected clip using deleteSelectedClip', () => {
+      const { addClipToTrack, selectClip, deleteSelectedClip } = useTimelineStore.getState();
+      
+      addClipToTrack(sampleClip, sampleTrack.id);
+      selectClip(sampleClip.id);
+      expect(useTimelineStore.getState().selectedClipId).toBe(sampleClip.id);
+      
+      deleteSelectedClip();
+      
+      // Clip should be removed from timeline
+      const state = useTimelineStore.getState();
+      const track = state.tracks.find(t => t.id === sampleTrack.id);
+      expect(track?.clips).toHaveLength(0);
+      
+      // Selection should be cleared
+      expect(state.selectedClipId).toBe(null);
+    });
+
+    it('should do nothing when deleteSelectedClip called with no selection', () => {
+      const { deleteSelectedClip } = useTimelineStore.getState();
+      
+      // No clip selected
+      expect(useTimelineStore.getState().selectedClipId).toBe(null);
+      
+      deleteSelectedClip();
+      
+      // Should not throw error and state should remain unchanged
+      const state = useTimelineStore.getState();
+      expect(state.selectedClipId).toBe(null);
+    });
   });
 
   describe('Track Management', () => {
@@ -348,6 +457,116 @@ describe('TimelineStore', () => {
       addClipToTrack(clip2, trackId);
       
       expect(useTimelineStore.getState().totalDuration).toBe(20); // clip2 ends at 20
+    });
+  });
+
+  describe('Selection State Persistence', () => {
+    beforeEach(() => {
+      useTimelineStore.setState({
+        tracks: [sampleTrack],
+      });
+    });
+
+    it('should maintain selection during playhead changes', () => {
+      const { addClipToTrack, selectClip, setPlayhead } = useTimelineStore.getState();
+      
+      addClipToTrack(sampleClip, sampleTrack.id);
+      selectClip(sampleClip.id);
+      
+      // Change playhead position
+      setPlayhead(50);
+      expect(useTimelineStore.getState().selectedClipId).toBe(sampleClip.id);
+      
+      setPlayhead(0);
+      expect(useTimelineStore.getState().selectedClipId).toBe(sampleClip.id);
+    });
+
+    it('should maintain selection during playback state changes', () => {
+      const { addClipToTrack, selectClip, play, pause } = useTimelineStore.getState();
+      
+      addClipToTrack(sampleClip, sampleTrack.id);
+      selectClip(sampleClip.id);
+      
+      // Start and stop playback
+      play();
+      expect(useTimelineStore.getState().selectedClipId).toBe(sampleClip.id);
+      
+      pause();
+      expect(useTimelineStore.getState().selectedClipId).toBe(sampleClip.id);
+    });
+
+    it('should maintain selection during snap settings changes', () => {
+      const { addClipToTrack, selectClip, setSnapToGrid, setSnapInterval } = useTimelineStore.getState();
+      
+      addClipToTrack(sampleClip, sampleTrack.id);
+      selectClip(sampleClip.id);
+      
+      // Change snap settings
+      setSnapToGrid(false);
+      expect(useTimelineStore.getState().selectedClipId).toBe(sampleClip.id);
+      
+      setSnapInterval(2);
+      expect(useTimelineStore.getState().selectedClipId).toBe(sampleClip.id);
+    });
+
+    it('should maintain selection when clips are moved', () => {
+      const { addClipToTrack, selectClip, moveClip } = useTimelineStore.getState();
+      
+      addClipToTrack(sampleClip, sampleTrack.id);
+      selectClip(sampleClip.id);
+      
+      // Move the selected clip
+      moveClip(sampleClip.id, 25);
+      expect(useTimelineStore.getState().selectedClipId).toBe(sampleClip.id);
+    });
+
+    it('should maintain selection when clips are trimmed', () => {
+      const { addClipToTrack, selectClip, trimClip } = useTimelineStore.getState();
+      
+      addClipToTrack(sampleClip, sampleTrack.id);
+      selectClip(sampleClip.id);
+      
+      // Trim the selected clip
+      trimClip(sampleClip.id, 1, 4);
+      expect(useTimelineStore.getState().selectedClipId).toBe(sampleClip.id);
+    });
+
+    it('should clear selection when selected clip is removed', () => {
+      const { addClipToTrack, selectClip, removeClip } = useTimelineStore.getState();
+      
+      addClipToTrack(sampleClip, sampleTrack.id);
+      selectClip(sampleClip.id);
+      
+      // Remove the selected clip
+      removeClip(sampleClip.id);
+      expect(useTimelineStore.getState().selectedClipId).toBe(null);
+    });
+
+    it('should clear selection when track containing selected clip is deleted', () => {
+      const { addClipToTrack, selectClip, deleteTrack } = useTimelineStore.getState();
+      
+      addClipToTrack(sampleClip, sampleTrack.id);
+      selectClip(sampleClip.id);
+      
+      // Delete the track containing the selected clip
+      deleteTrack(sampleTrack.id);
+      expect(useTimelineStore.getState().selectedClipId).toBe(null);
+    });
+
+    it('should maintain selection when other clips are added or removed', () => {
+      const { addClipToTrack, selectClip, removeClip } = useTimelineStore.getState();
+      
+      addClipToTrack(sampleClip, sampleTrack.id);
+      selectClip(sampleClip.id);
+      
+      // Add another clip
+      const clip2 = createTimelineClip('media-clip-2', sampleTrack.id, 20, 5);
+      addClipToTrack(clip2, sampleTrack.id);
+      expect(useTimelineStore.getState().selectedClipId).toBe(sampleClip.id);
+      
+      // Remove the other clip
+      removeClip(clip2.id);
+      expect(useTimelineStore.getState().selectedClipId).toBe(sampleClip.id);
     });
   });
 

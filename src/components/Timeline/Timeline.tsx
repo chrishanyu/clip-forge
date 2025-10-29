@@ -4,6 +4,7 @@ import { createTimelineClip } from '@/types';
 import { TimeRuler } from './TimeRuler';
 import { TimelineTracks } from './TimelineTracks';
 import { PlayheadIndicator } from './PlayheadIndicator';
+import { useKeyboardShortcuts, COMMON_SHORTCUTS } from '@/hooks/useKeyboardShortcuts';
 import './Timeline.css';
 
 // ============================================================================
@@ -44,6 +45,7 @@ export const Timeline: React.FC<TimelineProps> = ({ className = '' }) => {
     toggleSnapToGrid,
     removeDuplicateClips,
     timelineDuration,
+    deleteSelectedClip,
   } = useTimelineStore();
 
   // ============================================================================
@@ -232,9 +234,45 @@ export const Timeline: React.FC<TimelineProps> = ({ className = '' }) => {
    * Handle timeline click to seek
    */
   const handleTimelineClick = useCallback((event: React.MouseEvent) => {
+    // Focus the timeline element for keyboard events
+    if (timelineRef.current) {
+      timelineRef.current.focus();
+    }
+    
     const clickTime = mouseToTimelineTime(event.clientX);
     setPlayhead(clickTime);
   }, [mouseToTimelineTime, setPlayhead]);
+
+  // ============================================================================
+  // KEYBOARD SHORTCUTS
+  // ============================================================================
+
+  // Define keyboard shortcuts for timeline
+  const keyboardShortcuts = useMemo(() => [
+    {
+      key: COMMON_SHORTCUTS.DELETE,
+      action: deleteSelectedClip,
+      description: 'Delete selected clip'
+    },
+    {
+      key: COMMON_SHORTCUTS.BACKSPACE,
+      action: deleteSelectedClip,
+      description: 'Delete selected clip (alternative)'
+    }
+  ], [deleteSelectedClip]);
+
+  // Set up keyboard shortcuts
+  useKeyboardShortcuts(keyboardShortcuts, {
+    enabled: true,
+    target: timelineRef.current
+  });
+
+  // Focus timeline on mount for keyboard events
+  useEffect(() => {
+    if (timelineRef.current) {
+      timelineRef.current.focus();
+    }
+  }, []);
 
   // ============================================================================
   // EFFECTS
@@ -296,6 +334,7 @@ export const Timeline: React.FC<TimelineProps> = ({ className = '' }) => {
           onMouseDown={handleMouseDown}
           onClick={handleTimelineClick}
           style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+          tabIndex={0}
         >
           {/* Timeline Canvas (Explicit width container for all timeline elements) */}
           <div 

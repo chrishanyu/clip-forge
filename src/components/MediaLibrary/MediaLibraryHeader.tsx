@@ -1,5 +1,4 @@
 import React from 'react';
-import { ImportButton } from './ImportButton';
 
 // ============================================================================
 // MEDIA LIBRARY HEADER COMPONENT
@@ -14,7 +13,6 @@ export const MediaLibraryHeader: React.FC<MediaLibraryHeaderProps> = ({ totalCli
     <div className="media-library-header">
       <h2 className="library-title">Media Library</h2>
       <div className="library-actions">
-        <ImportButton />
         {totalClips > 0 && (
           <span className="clips-count">{totalClips} video{totalClips !== 1 ? 's' : ''}</span>
         )}

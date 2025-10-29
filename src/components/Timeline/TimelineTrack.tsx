@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { TimelineTrack as TimelineTrackType } from '@/types';
 import { TimelineClip } from './TimelineClip';
 import { useDragDropContext } from '@/contexts/DragDropContext';
+import { useTimelineStore } from '@/stores/timelineStore';
 import './TimelineTrack.css';
 
 // ============================================================================
@@ -27,6 +28,7 @@ export const TimelineTrack: React.FC<TimelineTrackProps> = ({
 }) => {
   const { registerDropZone, unregisterDropZone } = useDragDropContext();
   const [isDragOver, setIsDragOver] = useState(false);
+  const { clearSelection } = useTimelineStore();
   
   // ============================================================================
   // DROP ZONE REGISTRATION
@@ -68,6 +70,24 @@ export const TimelineTrack: React.FC<TimelineTrackProps> = ({
   }, [track.id, pixelsPerSecond, onDrop, registerDropZone, unregisterDropZone]);
 
   // ============================================================================
+  // CLICK HANDLING
+  // ============================================================================
+
+  /**
+   * Handle clicks on empty track areas to clear selection
+   */
+  const handleTrackClick = (event: React.MouseEvent) => {
+    // Only clear selection if clicking on the track content area (not on clips)
+    const target = event.target as HTMLElement;
+    const isClickOnClip = target.closest('.timeline-clip');
+    const isClickOnEmptyArea = target.closest('.track-empty');
+    
+    if (!isClickOnClip && (isClickOnEmptyArea || target.classList.contains('track-content'))) {
+      clearSelection();
+    }
+  };
+
+  // ============================================================================
   // RENDER
   // ============================================================================
 
@@ -86,7 +106,7 @@ export const TimelineTrack: React.FC<TimelineTrackProps> = ({
       </div>
 
       {/* Track Content */}
-      <div className="track-content">
+      <div className="track-content" onClick={handleTrackClick}>
         {track.clips.length === 0 ? (
           <div className="track-empty">
             <div className="empty-text">Drop clips here</div>

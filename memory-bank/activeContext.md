@@ -1,45 +1,57 @@
 # Active Context
 
-**Last Updated**: December 2024 - Task 4.5 Complete
-**Current Phase**: Media Library Interface Implementation - Click Handlers Complete
-**Focus**: Media Library Context Menus and Error Handling
+**Last Updated**: December 2024 - Task 6.8 Complete
+**Current Phase**: Timeline Editor Implementation - Trim Handles Complete
+**Focus**: Timeline Clip Selection and Keyboard Shortcuts
 
 ## Current Work Status
 
 ### What We're Doing Now
 **COMPLETED**: Video import system with FFmpeg integration (metadata extraction, thumbnail generation, file operations)
 **COMPLETED**: Media library interface with drag-and-drop functionality
-**COMPLETED**: Media library click handlers for selection and timeline addition
-**NEXT**: Adding context menus, loading states, and error handling
+**COMPLETED**: Video preview player with timeline synchronization
+**COMPLETED**: Timeline editor with clip manipulation and trim handles
+**NEXT**: Timeline clip selection, keyboard shortcuts, and export system
 
 ### Immediate Next Steps
-1. **Media Library Context Menus** (Priority: HIGH)
-   - Implement right-click context menu for clip deletion
-   - Add loading indicators during import and thumbnail generation
-   - Handle error states with toast notifications for import failures
+1. **Timeline Clip Selection** (Priority: HIGH)
+   - Implement clip selection and highlighting functionality
+   - Add keyboard shortcuts (spacebar, arrows, home/end, delete)
+   - Complete timeline editor testing
 
-2. **Media Library Testing** (Priority: MEDIUM)
-   - Write component tests for MediaLibrary, ImportButton, and ClipCard
-   - Test drag-and-drop functionality
-   - Test error handling scenarios
+2. **Export System** (Priority: HIGH)
+   - Create FFmpeg export module with concatenation logic
+   - Implement export dialog and progress tracking
+   - Build complete export workflow
 
 ## Recent Changes
+- ✅ **Task 6.8 Complete**: Trim handles for adjusting clip start/end points
+- ✅ **Task 6.7 Complete**: Clip dragging within timeline for reordering
+- ✅ **Task 6.6 Complete**: Drag-and-drop from media library to timeline tracks
+- ✅ **Task 6.5 Complete**: Zoom controls and pixel-to-time conversion logic
+- ✅ **Task 6.4 Complete**: Playhead component with draggable scrubbing functionality
+- ✅ **Task 6.3 Complete**: TimelineClip component with visual positioning and duration display
+- ✅ **Task 6.2 Complete**: TimelineTrack components for multiple video tracks
+- ✅ **Task 6.1 Complete**: Timeline container component with horizontal scroll and time ruler
+- ✅ **Task 5.6 Complete**: Video loading states, errors, and codec compatibility issues
+- ✅ **Task 5.5 Complete**: RequestAnimationFrame loop for smooth playback updates
+- ✅ **Task 5.4 Complete**: Video synchronization with timeline playhead position
+- ✅ **Task 5.3 Complete**: useVideoPlayback hook for managing playback state and timeline sync
+- ✅ **Task 5.2 Complete**: PlayerControls component (play/pause, time display, volume control)
+- ✅ **Task 5.1 Complete**: VideoPlayer component with HTML5 video element and custom controls
+- ✅ **Task 4.9 Complete**: Component tests for MediaLibrary, ImportButton, and ClipCard
+- ✅ **Task 4.8 Complete**: Error states with toast notifications for import failures
+- ✅ **Task 4.7 Complete**: Loading indicators during import and thumbnail generation
+- ✅ **Task 4.6 Complete**: Right-click context menu for clip deletion
 - ✅ **Task 4.5 Complete**: Click handlers for clip selection and double-click to add to timeline
-- ✅ **Media Store Fix**: Fixed computed values to be properties instead of getter methods
-- ✅ **Timeline Integration**: Media clips can now be added to timeline via double-click
-- ✅ **Clip Selection**: Visual selection state implemented in ClipCard component
 - ✅ **Task 4.4 Complete**: Drag-and-drop functionality for importing files
+- ✅ **Task 4.3 Complete**: ClipCard component displaying thumbnails, metadata, and hover effects
+- ✅ **Task 4.2 Complete**: ImportButton component with native file dialog integration
+- ✅ **Task 4.1 Complete**: MediaLibrary component with grid layout and empty state
+- ✅ **Task 4.0 Complete**: Media library interface with drag-and-drop
 - ✅ **Task 3.0 Complete**: Video import system with FFmpeg integration
-- ✅ **Rust Command Infrastructure**: Complete command module structure in `src-tauri/src/commands/`
-- ✅ **FFmpeg Integration**: Metadata extraction and thumbnail generation modules implemented
-- ✅ **File Operations**: Video import command with error handling and cleanup
-- ✅ **Backend Testing**: Unit tests for FFmpeg integration and command handlers
 - ✅ **Task 2.0 Complete**: Core data models and state management
-- ✅ **TypeScript Types**: 6 domain-specific type files with factory functions
-- ✅ **Zustand Stores**: 3 complete stores (media, timeline, export) with 77 tests
-- ✅ **Utility Functions**: 78 utility functions across 4 files with comprehensive tests
-- ✅ **Testing Infrastructure**: 155 unit tests, all passing
-- ✅ **FFmpeg Setup**: Binaries downloaded and permissions configured
+- ✅ **Task 1.0 Complete**: Project infrastructure and dependencies
 
 ## Active Decisions & Considerations
 
@@ -256,20 +268,33 @@ cargo clippy
 - Test early, test often
 - Package and test .dmg before final day
 
-## Current Focus: Task 4.0
-**Create media library interface with drag-and-drop**
+## Current Focus: Task 6.9
+**Add clip selection, highlighting, and deletion functionality**
 
 ### Sub-tasks:
-- 4.1 Create MediaLibrary component with grid layout and empty state
-- 4.2 Implement ImportButton component with native file dialog integration
-- 4.3 Create ClipCard component displaying thumbnails, metadata, and hover effects
-- 4.4 Implement drag-and-drop functionality for importing files
-- 4.5 Add click handlers for clip selection and double-click to add to timeline
-- 4.6 Implement right-click context menu for clip deletion
-- 4.7 Add loading indicators during import and thumbnail generation
-- 4.8 Handle error states with toast notifications for import failures
-- 4.9 Write component tests for MediaLibrary, ImportButton, and ClipCard
+- 6.9 Add clip selection, highlighting, and deletion functionality
+- 6.10 Implement click-to-seek and keyboard shortcuts (spacebar, arrows, home/end)
+- 6.11 Write comprehensive tests for timeline components and interactions
 
-**Estimated Time**: 1-2 days
-**Risk Level**: Medium (UI complexity, drag-and-drop interactions)
-**Dependencies**: None (backend complete)
+**Estimated Time**: 1 day
+**Risk Level**: Low (standard UI patterns)
+**Dependencies**: Timeline editor components complete
+
+## Next Focus: Task 7.0
+**Build export system with progress tracking**
+
+### Sub-tasks:
+- 7.1 Create FFmpeg export module with concatenation logic
+- 7.2 Implement export command handler with progress parsing from FFmpeg stderr
+- 7.3 Create ExportDialog component with settings form (resolution, quality, output path)
+- 7.4 Implement ExportProgress component with progress bar and time estimates
+- 7.5 Add export trigger button in header with timeline validation
+- 7.6 Implement progress event listening and real-time updates
+- 7.7 Add export cancellation functionality with process termination
+- 7.8 Handle export errors with user-friendly messages and retry options
+- 7.9 Implement temporary file cleanup after export completion
+- 7.10 Write tests for export functionality and progress tracking
+
+**Estimated Time**: 2-3 days
+**Risk Level**: Medium (FFmpeg integration, progress parsing)
+**Dependencies**: Timeline editor complete
