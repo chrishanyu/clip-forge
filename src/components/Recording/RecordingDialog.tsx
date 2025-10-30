@@ -63,6 +63,14 @@ export const RecordingDialog: React.FC<RecordingDialogProps> = ({ isOpen, onClos
       clearError();
     }
   }, [isOpen, loadDevices, clearError]);
+  
+  // Ensure camera preview is started for webcam and PiP recording
+  useEffect(() => {
+    if (isOpen && (recordingType === 'webcam' || recordingType === 'pip')) {
+      // The CameraPreview component will handle starting the preview
+      // when it detects a selected camera
+    }
+  }, [isOpen, recordingType]);
 
   useEffect(() => {
     if (isOpen && !settings) {
@@ -95,8 +103,9 @@ export const RecordingDialog: React.FC<RecordingDialogProps> = ({ isOpen, onClos
 
     setIsStarting(true);
     try {
+      // For screen and PiP recordings, use the Rust backend
       await startRecording(settings);
-      // Dialog will be closed by the parent component when recording starts
+      // Dialog will be closed when recording starts via event listener
     } catch (error) {
       console.error('Failed to start recording:', error);
     } finally {
@@ -216,8 +225,8 @@ export const RecordingDialog: React.FC<RecordingDialogProps> = ({ isOpen, onClos
             />
           </div>
 
-          {/* Camera Preview (for webcam and pip) */}
-          {(recordingType === 'webcam' || recordingType === 'pip') && (
+          {/* Camera Preview (for pip only - webcam uses WebcamRecorder's own preview) */}
+          {recordingType === 'pip' && (
             <div className="camera-preview-section">
               <h3 className="recording-section-title">Camera Preview</h3>
               <CameraPreview
@@ -238,21 +247,21 @@ export const RecordingDialog: React.FC<RecordingDialogProps> = ({ isOpen, onClos
           )}
 
           {/* Webcam Recorder (for webcam only) */}
+          {/* Keep dialog open during webcam recording so component stays mounted */}
           {recordingType === 'webcam' && settings && 'cameraId' in settings && (
             <div className="webcam-recorder-section">
               <h3 className="recording-section-title">Webcam Recording</h3>
               <WebcamRecorder
                 settings={settings as any}
                 onRecordingStart={() => {
-                  // Close dialog when recording starts
+                  // DON'T close dialog - keep it open so WebcamRecorder stays mounted
+                }}
+                onRecordingStop={() => {
+                  // Close dialog after recording stops
                   onClose();
                 }}
-                onRecordingStop={(filePath) => {
-                  console.log('Webcam recording completed:', filePath);
-                  // TODO: Add to media library
-                }}
                 onError={(error) => {
-                  console.error('Webcam recording error:', error);
+                  handleRecordingError(error);
                 }}
               />
             </div>
@@ -297,15 +306,19 @@ export const RecordingDialog: React.FC<RecordingDialogProps> = ({ isOpen, onClos
             onClick={handleClose}
             disabled={isStarting}
           >
-            Cancel
+            {recordingType === 'webcam' ? 'Close' : 'Cancel'}
           </button>
-          <button
-            className="recording-dialog-start"
-            onClick={handleStartRecording}
-            disabled={!canStartRecording()}
-          >
-            {isStarting ? 'Starting...' : 'Start Recording'}
-          </button>
+          {/* Only show Start Recording button for screen and PiP modes */}
+          {/* Webcam mode uses WebcamRecorder's internal button */}
+          {recordingType !== 'webcam' && (
+            <button
+              className="recording-dialog-start"
+              onClick={handleStartRecording}
+              disabled={!canStartRecording()}
+            >
+              {isStarting ? 'Starting...' : 'Start Recording'}
+            </button>
+          )}
         </div>
       </div>
     </div>

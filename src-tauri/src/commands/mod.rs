@@ -56,6 +56,10 @@ impl CommandError {
     pub fn serialization_error(message: String) -> Self {
         Self::new(message, "serialization_error".to_string())
     }
+
+    pub fn recording_error(message: String) -> Self {
+        Self::new(message, "recording_error".to_string())
+    }
 }
 
 impl From<std::io::Error> for CommandError {

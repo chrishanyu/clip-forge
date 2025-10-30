@@ -4,10 +4,12 @@ import { Timeline } from "@/components/Timeline";
 import { ToastContainer } from "@/components/Toast";
 import { DragOverlay } from "@/components/DragOverlay";
 import { AppHeader } from "@/components/Layout";
+import { RecordingIndicator } from "@/components/Recording";
 import { DragDropProvider } from "@/contexts/DragDropContext";
 import { useToastStore } from "@/stores/toastStore";
 import { useProjectStore } from "@/stores/projectStore";
 import { useMediaStore } from "@/stores/mediaStore";
+import { useRecordingStore } from "@/stores/recordingStore";
 import { useEffect } from "react";
 import "./App.css";
 
@@ -15,6 +17,7 @@ function App() {
   const { toasts, removeToast } = useToastStore();
   const { currentProject, createProject, loading: projectLoading, error: projectError } = useProjectStore();
   const { clearClips } = useMediaStore();
+  const { isRecordingIndicatorVisible } = useRecordingStore();
 
   // Auto-create a default project on app start
   useEffect(() => {
@@ -76,6 +79,7 @@ function App() {
         </div>
         <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
         <DragOverlay />
+        <RecordingIndicator isVisible={isRecordingIndicatorVisible} />
       </div>
     </DragDropProvider>
   );

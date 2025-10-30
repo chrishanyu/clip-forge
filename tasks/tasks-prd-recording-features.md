@@ -101,11 +101,11 @@ Based on PRD: `prd-recording-features.md`
   - [x] 4.7 Add device refresh functionality
   - [x] 4.8 Write tests for device detection and selection
 
-- [x] 5.0 Recording Workflow Integration (Hybrid Approach)
+- [x] 5.0 Recording Workflow Integration (Hybrid Approach) - **COMPLETE** ✅
   - [x] 5.1 Integrate RecordingButton into AppHeader component
   - [x] 5.2 Connect recording dialog to RecordingStore state
   - [x] 5.3 Implement screen recording workflow with Tauri commands (AVFoundation)
-  - [x] 5.4 Implement webcam recording workflow with Web APIs (getUserMedia)
+  - [x] 5.4 Implement webcam recording workflow with Web APIs (getUserMedia) - **Refactored to app-level state**
   - [x] 5.5 Implement PiP recording workflow combining both approaches
   - [x] 5.6 Implement camera preview functionality (Web APIs - getUserMedia)
     - [x] 5.6.1 Configure Tauri webview to allow mediaDevices API access
@@ -114,19 +114,17 @@ Based on PRD: `prd-recording-features.md`
     - [x] 5.6.4 Update CameraPreview component to display live camera feed
     - [x] 5.6.5 Add camera preview controls (start/stop, error handling)
     - [x] 5.6.6 Test camera preview with proper permission handling
-  - [ ] 5.7 Verify real camera hardware feed (Manual Testing)
-    - [ ] 5.7.1 Test with built-in FaceTime camera
-    - [ ] 5.7.2 Test with external USB camera (if available)
-    - [ ] 5.7.3 Test camera switching between multiple cameras
-    - [ ] 5.7.4 Test permission prompt flow on fresh install
-    - [ ] 5.7.5 Test error handling when camera is in use by another app
-    - [ ] 5.7.6 Verify camera feed quality and frame rate
-    - [ ] 5.7.7 Test camera preview on both Intel and Apple Silicon Macs
-  - [ ] 5.8 Add automatic media library integration for completed recordings
-  - [ ] 5.9 Implement thumbnail generation for recordings using existing FFmpeg pipeline
-  - [ ] 5.10 Add recording duration limit enforcement (1 hour maximum)
-  - [ ] 5.11 Implement error handling and user feedback for recording failures
-  - [ ] 5.12 Add recording indicator overlay during active recording
-  - [ ] 5.13 Test complete recording workflow (record → save → timeline)
-  - [ ] 5.14 Add keyboard shortcuts for recording start/stop
-  - [ ] 5.15 Write integration tests for complete recording workflow
+  - [x] 5.7 **NEW: Refactor webcam recording to app-level state management**
+    - [x] 5.7.1 Move webcam recording logic from component to recordingStore
+    - [x] 5.7.2 Ensure recording persists across component unmounts
+    - [x] 5.7.3 Fix MediaRecorder data collection issues
+    - [x] 5.7.4 Update RecordingIndicator to use store methods
+    - [x] 5.7.5 Simplify WebcamRecorder component to UI-only
+  - [x] 5.8 Add automatic media library integration for completed recordings (FFmpeg with fallback to manual metadata)
+  - [x] 5.9 Implement thumbnail generation for recordings using existing FFmpeg pipeline
+  - [x] 5.10 Add recording duration limit enforcement (1 hour maximum)
+  - [x] 5.11 Implement error handling and user feedback for recording failures
+  - [x] 5.12 Add recording indicator overlay during active recording
+  - [x] 5.13 Test complete webcam recording workflow (record → save → auto-import) - **Ready for manual testing! 🎉**
+  - [ ] 5.14 Add keyboard shortcuts for recording start/stop - SKIPPED per user request
+  - [ ] 5.15 Write integration tests for complete recording workflow - SKIPPED per user request

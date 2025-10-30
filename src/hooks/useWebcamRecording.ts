@@ -59,9 +59,11 @@ export function useWebcamRecording() {
   
   useEffect(() => {
     return () => {
-      // Stop stream
+      // Stop all tracks in the stream
       if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current.getTracks().forEach(track => {
+          track.stop();
+        });
         streamRef.current = null;
       }
     };
@@ -115,8 +117,6 @@ export function useWebcamRecording() {
         error: null,
       }));
     } catch (error) {
-      console.error('❌ Failed to start camera preview:', error);
-      
       let errorMessage = 'Unknown error';
       if (error instanceof Error) {
         if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {

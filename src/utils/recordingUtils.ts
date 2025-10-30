@@ -41,7 +41,7 @@ export class WebcamRecorder {
   async initialize(stream: MediaStream): Promise<void> {
     if (!MediaRecorder.isTypeSupported(this.getMimeType())) {
       throw createAppError(
-        'UNSUPPORTED_MIME_TYPE',
+        'recording',
         'Unsupported recording format',
         `MIME type ${this.getMimeType()} is not supported`
       );
@@ -61,7 +61,7 @@ export class WebcamRecorder {
       this.setupEventHandlers();
     } catch (error) {
       throw createAppError(
-        'RECORDER_INITIALIZATION_FAILED',
+        'recording',
         'Failed to initialize MediaRecorder',
         error instanceof Error ? error.message : 'Unknown error'
       );
@@ -74,7 +74,7 @@ export class WebcamRecorder {
   start(): void {
     if (!this.mediaRecorder || this.isRecording) {
       throw createAppError(
-        'INVALID_RECORDING_STATE',
+        'recording',
         'Cannot start recording',
         'Recorder not initialized or already recording'
       );
@@ -93,7 +93,7 @@ export class WebcamRecorder {
     return new Promise((resolve, reject) => {
       if (!this.mediaRecorder || !this.isRecording) {
         reject(createAppError(
-          'INVALID_RECORDING_STATE',
+          'recording',
           'Cannot stop recording',
           'No active recording to stop'
         ));
@@ -108,10 +108,10 @@ export class WebcamRecorder {
         resolve(blob);
       };
 
-      const handleError = (event: Event) => {
+      const handleError = () => {
         this.isRecording = false;
         reject(createAppError(
-          'RECORDING_ERROR',
+          'recording',
           'Recording failed',
           'MediaRecorder encountered an error'
         ));
@@ -119,6 +119,12 @@ export class WebcamRecorder {
 
       this.mediaRecorder.addEventListener('stop', handleStop, { once: true });
       this.mediaRecorder.addEventListener('error', handleError, { once: true });
+      
+      // Request any pending data before stopping
+      if (this.mediaRecorder.state === 'recording') {
+        this.mediaRecorder.requestData();
+      }
+      
       this.mediaRecorder.stop();
     });
   }
@@ -129,7 +135,7 @@ export class WebcamRecorder {
   pause(): void {
     if (!this.mediaRecorder || !this.isRecording) {
       throw createAppError(
-        'INVALID_RECORDING_STATE',
+        'recording',
         'Cannot pause recording',
         'No active recording to pause'
       );
@@ -144,7 +150,7 @@ export class WebcamRecorder {
   resume(): void {
     if (!this.mediaRecorder || this.isRecording) {
       throw createAppError(
-        'INVALID_RECORDING_STATE',
+        'recording',
         'Cannot resume recording',
         'No active recording to resume'
       );
@@ -178,14 +184,27 @@ export class WebcamRecorder {
    * Clean up resources
    */
   cleanup(): void {
+    // Stop recording if active
+    if (this.isRecording && this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
+      try {
+        this.mediaRecorder.stop();
+      } catch (e) {
+        // Ignore errors when stopping
+      }
+    }
+    
+    // Remove event listeners
     if (this.mediaRecorder) {
       this.mediaRecorder.removeEventListener('dataavailable', this.handleDataAvailable);
       this.mediaRecorder.removeEventListener('error', this.handleError);
       this.mediaRecorder = null;
     }
 
+    // Stop all stream tracks
     if (this.stream) {
-      this.stream.getTracks().forEach(track => track.stop());
+      this.stream.getTracks().forEach(track => {
+        track.stop();
+      });
       this.stream = null;
     }
 
@@ -238,7 +257,6 @@ export class WebcamRecorder {
 
   private handleError = (event: Event): void => {
     this.isRecording = false;
-    console.error('MediaRecorder error:', event);
   };
 }
 
@@ -252,7 +270,7 @@ export class WebcamRecorder {
 export function validateRecordingConstraints(constraints: MediaStreamConstraints): AppError | null {
   if (!constraints.video && !constraints.audio) {
     return createAppError(
-      'INVALID_CONSTRAINTS',
+      'validation',
       'Invalid recording constraints',
       'At least video or audio must be enabled'
     );
@@ -263,7 +281,7 @@ export function validateRecordingConstraints(constraints: MediaStreamConstraints
     
     if (videoConstraints.width && (videoConstraints.width as number) <= 0) {
       return createAppError(
-        'INVALID_VIDEO_WIDTH',
+        'validation',
         'Invalid video width',
         'Video width must be greater than 0'
       );
@@ -271,7 +289,7 @@ export function validateRecordingConstraints(constraints: MediaStreamConstraints
 
     if (videoConstraints.height && (videoConstraints.height as number) <= 0) {
       return createAppError(
-        'INVALID_VIDEO_HEIGHT',
+        'validation',
         'Invalid video height',
         'Video height must be greater than 0'
       );
@@ -279,7 +297,7 @@ export function validateRecordingConstraints(constraints: MediaStreamConstraints
 
     if (videoConstraints.frameRate && (videoConstraints.frameRate as number) <= 0) {
       return createAppError(
-        'INVALID_FRAME_RATE',
+        'validation',
         'Invalid frame rate',
         'Frame rate must be greater than 0'
       );
@@ -312,7 +330,7 @@ export function getOptimalWebcamConstraints(deviceId?: string): MediaStreamConst
  * Check if MediaRecorder is supported
  */
 export function isMediaRecorderSupported(): boolean {
-  return typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported;
+  return typeof MediaRecorder !== 'undefined' && typeof MediaRecorder.isTypeSupported === 'function';
 }
 
 /**

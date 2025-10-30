@@ -42,6 +42,7 @@ use commands::recording::{
     check_camera_permission, request_camera_permission,
     check_microphone_permission, request_microphone_permission,
     start_camera_preview_command, stop_camera_preview_command, get_camera_preview_data_command,
+    save_webcam_recording,
 };
 
 // Legacy command for testing
@@ -118,6 +119,8 @@ pub fn run() {
             start_camera_preview_command,
             stop_camera_preview_command,
             get_camera_preview_data_command,
+            // Webcam recording operations
+            save_webcam_recording,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

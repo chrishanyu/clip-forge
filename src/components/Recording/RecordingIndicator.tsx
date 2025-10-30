@@ -86,10 +86,18 @@ export const RecordingIndicator: React.FC<RecordingIndicatorProps> = ({
   
   const handleStopRecording = async () => {
     try {
+      // For webcam recordings, use the store's stopWebcamRecording
+      if (currentSession?.type === 'webcam') {
+        await useRecordingStore.getState().stopWebcamRecording();
+        onStopRecording?.();
+        return;
+      }
+      
+      // For screen/PiP recordings, use the store's stopRecording
       await stopRecording();
       onStopRecording?.();
     } catch (error) {
-      console.error('Failed to stop recording:', error);
+      console.error('❌ [RecordingIndicator] Failed to stop recording:', error);
     }
   };
 
@@ -131,7 +139,9 @@ export const RecordingIndicator: React.FC<RecordingIndicatorProps> = ({
   // RENDER
   // ========================================================================
   
-  if (!isVisible || !currentSession) return null;
+  if (!isVisible || !currentSession) {
+    return null;
+  }
 
   return (
     <div 

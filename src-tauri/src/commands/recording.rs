@@ -9,8 +9,11 @@ use crate::recording::screen::{get_available_screens as get_screens, ScreenInfo}
 use crate::recording::camera::{get_available_cameras as get_cameras, CameraInfo, start_camera_preview, stop_camera_preview, get_camera_preview_data};
 use crate::recording::session::RECORDING_MANAGER;
 use crate::recording::permissions;
+use crate::ffmpeg::thumbnail::generate_default_thumbnail;
 use serde::{Deserialize, Serialize};
-use tauri::Emitter;
+use tauri::{Emitter, Manager, AppHandle};
+use std::path::PathBuf;
+use std::fs;
 
 // ============================================================================
 // DATA STRUCTURES
@@ -36,6 +39,7 @@ pub struct RecordingSettingsRequest {
 pub struct RecordingSessionResponse {
     pub session_id: String,
     pub file_path: Option<String>,
+    pub thumbnail_path: Option<String>,
     pub status: String,
 }
 
@@ -113,6 +117,7 @@ pub async fn start_recording(
     Ok(RecordingSessionResponse {
         session_id,
         file_path: None,
+        thumbnail_path: None,
         status: "recording".to_string(),
     })
 }
@@ -122,17 +127,45 @@ pub async fn start_recording(
 pub async fn stop_recording(
     app_handle: tauri::AppHandle,
     session_id: String,
-) -> CommandResult<()> {
+) -> CommandResult<RecordingSessionResponse> {
+    // Get session info before stopping to retrieve the file path
+    let session_info = RECORDING_MANAGER
+        .get_session(&session_id)
+        .map_err(|e| CommandError::validation_error(format!("Failed to get session info: {}", e)))?;
+    
+    let file_path = session_info.file_path.clone();
+    
     // Stop the recording session
     RECORDING_MANAGER
         .stop_session(&session_id)
         .map_err(|e| CommandError::validation_error(format!("Failed to stop recording: {}", e)))?;
     
+    // Generate thumbnail if we have a file path
+    let thumbnail_path = if let Some(ref path) = file_path {
+        match generate_default_thumbnail(&app_handle, path).await {
+            Ok(thumb_path) => {
+                println!("✅ Generated thumbnail for recording: {}", thumb_path);
+                Some(thumb_path)
+            }
+            Err(e) => {
+                eprintln!("⚠️ Failed to generate thumbnail for recording: {}", e.message);
+                None
+            }
+        }
+    } else {
+        None
+    };
+    
     // Emit event to frontend
     app_handle.emit("recording-stopped", &session_id)
         .map_err(|e| CommandError::validation_error(format!("Failed to emit event: {}", e)))?;
     
-    Ok(())
+    Ok(RecordingSessionResponse {
+        session_id,
+        file_path,
+        thumbnail_path,
+        status: "stopped".to_string(),
+    })
 }
 
 /// Pause recording
@@ -197,6 +230,7 @@ pub async fn get_recording_session(
     Ok(RecordingSessionResponse {
         session_id: session.id,
         file_path: session.file_path,
+        thumbnail_path: None, // Thumbnail is generated only when stopping recording
         status: format!("{:?}", session.status).to_lowercase(),
     })
 }
@@ -279,11 +313,13 @@ async fn start_screen_recording_impl(
 }
 
 /// Start webcam recording implementation
+/// NOTE: Webcam recording is handled entirely in the frontend using Web APIs (getUserMedia + MediaRecorder).
+/// This function just creates a session for tracking purposes.
 async fn start_webcam_recording_impl(
     app_handle: tauri::AppHandle,
-    settings: RecordingSettingsRequest,
+    _settings: RecordingSettingsRequest,
 ) -> Result<String, CommandError> {
-    // Create session
+    // Create session for tracking
     let session_id = RECORDING_MANAGER
         .create_session(crate::recording::session::RecordingSessionType::Camera)
         .map_err(|e| CommandError::validation_error(format!("Failed to create session: {}", e)))?;
@@ -293,12 +329,28 @@ async fn start_webcam_recording_impl(
         .start_session(&session_id)
         .map_err(|e| CommandError::validation_error(format!("Failed to start recording: {}", e)))?;
     
+    // Set a dummy file path (actual recording is handled in frontend)
+    // We'll update this when the frontend provides the real file path
+    let app_data_dir = app_handle.path().app_data_dir()
+        .map_err(|e| CommandError::io_error(format!("Failed to get app data dir: {}", e)))?;
+    
+    let recordings_dir = app_data_dir.join("recordings");
+    std::fs::create_dir_all(&recordings_dir)
+        .map_err(|e| CommandError::io_error(format!("Failed to create recordings dir: {}", e)))?;
+    
+    let file_path = recordings_dir
+        .join(format!("webcam_{}.webm", chrono::Utc::now().timestamp()))
+        .to_string_lossy()
+        .to_string();
+    
+    // Update session with file path
+    RECORDING_MANAGER
+        .update_file_path(&session_id, file_path.clone())
+        .map_err(|e| CommandError::validation_error(format!("Failed to update file path: {}", e)))?;
+    
     // Emit event to frontend
     app_handle.emit("recording-started", &session_id)
         .map_err(|e| CommandError::validation_error(format!("Failed to emit event: {}", e)))?;
-    
-    // TODO: Start actual AVFoundation camera recording
-    // For now, just return the session ID
     
     Ok(session_id)
 }
@@ -384,4 +436,34 @@ pub async fn stop_camera_preview_command(session_id: String) -> CommandResult<()
 pub async fn get_camera_preview_data_command(session_id: String) -> CommandResult<(Vec<u8>, u32, u32)> {
     get_camera_preview_data(&session_id)
         .map_err(|e| CommandError::validation_error(format!("Failed to get camera preview data: {}", e)))
+}
+
+/// Save webcam recording data to disk
+#[tauri::command]
+pub async fn save_webcam_recording(
+    app_handle: AppHandle,
+    file_name: String,
+    data: Vec<u8>
+) -> CommandResult<String> {
+    // Get app data directory
+    let app_data_dir = app_handle
+        .path()
+        .app_data_dir()
+        .map_err(|e| CommandError::recording_error(format!("Failed to get app data directory: {}", e)))?;
+    
+    // Create recordings directory if it doesn't exist
+    let recordings_dir = app_data_dir.join("recordings");
+    fs::create_dir_all(&recordings_dir)
+        .map_err(|e| CommandError::recording_error(format!("Failed to create recordings directory: {}", e)))?;
+    
+    // Save file
+    let file_path = recordings_dir.join(&file_name);
+    fs::write(&file_path, data)
+        .map_err(|e| CommandError::recording_error(format!("Failed to write recording file: {}", e)))?;
+    
+    // Return absolute path as string
+    file_path
+        .to_str()
+        .ok_or_else(|| CommandError::recording_error("Invalid path encoding".to_string()))
+        .map(|s| s.to_string())
 }

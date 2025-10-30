@@ -162,6 +162,19 @@ impl RecordingSessionManager {
         Ok(())
     }
 
+    /// Update session file path
+    pub fn update_file_path(&self, session_id: &str, file_path: String) -> Result<(), String> {
+        let mut sessions = self.sessions.lock().map_err(|e| format!("Failed to lock sessions: {}", e))?;
+        
+        if let Some(session) = sessions.get_mut(session_id) {
+            session.file_path = Some(file_path);
+        } else {
+            return Err("Session not found".to_string());
+        }
+        
+        Ok(())
+    }
+
     /// Set session error
     pub fn set_session_error(&self, session_id: &str, error: String) -> Result<(), String> {
         let mut sessions = self.sessions.lock().map_err(|e| format!("Failed to lock sessions: {}", e))?;
