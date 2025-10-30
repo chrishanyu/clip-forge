@@ -47,6 +47,7 @@ export const RecordingIndicator: React.FC<RecordingIndicatorProps> = ({
   
   const [duration, setDuration] = useState(0);
   const [isMinimized, setIsMinimized] = useState(false);
+  const [isStopping, setIsStopping] = useState(false);
 
   // ========================================================================
   // EFFECTS
@@ -80,11 +81,20 @@ export const RecordingIndicator: React.FC<RecordingIndicatorProps> = ({
     return () => clearInterval(interval);
   }, [isVisible, currentSession]);
 
+  // Reset stopping state when indicator becomes invisible (recording stopped successfully)
+  useEffect(() => {
+    if (!isVisible) {
+      setIsStopping(false);
+    }
+  }, [isVisible]);
+
   // ========================================================================
   // EVENT HANDLERS
   // ========================================================================
   
   const handleStopRecording = async () => {
+    setIsStopping(true);
+    
     try {
       // For webcam recordings, use the store's stopWebcamRecording
       if (currentSession?.type === 'webcam') {
@@ -96,8 +106,10 @@ export const RecordingIndicator: React.FC<RecordingIndicatorProps> = ({
       // For screen/PiP recordings, use the store's stopRecording
       await stopRecording();
       onStopRecording?.();
+      // isStopping will be reset when isVisible becomes false
     } catch (error) {
       console.error('❌ [RecordingIndicator] Failed to stop recording:', error);
+      setIsStopping(false);
     }
   };
 
@@ -154,9 +166,13 @@ export const RecordingIndicator: React.FC<RecordingIndicatorProps> = ({
       <div className="recording-indicator-content">
         {/* Recording Status */}
         <div className="recording-indicator-status">
-          <div className="recording-indicator-dot"></div>
+          {isStopping ? (
+            <div className="recording-indicator-spinner"></div>
+          ) : (
+            <div className="recording-indicator-dot"></div>
+          )}
           <span className="recording-indicator-label">
-            {getRecordingTypeLabel()}
+            {isStopping ? 'Processing Recording...' : getRecordingTypeLabel()}
           </span>
         </div>
 
@@ -184,13 +200,23 @@ export const RecordingIndicator: React.FC<RecordingIndicatorProps> = ({
           </button>
           
           <button
-            className="recording-indicator-stop"
+            className={`recording-indicator-stop ${isStopping ? 'recording-indicator-stop-processing' : ''}`}
             onClick={handleStopRecording}
-            title="Stop Recording"
-            aria-label="Stop recording"
+            title={isStopping ? 'Processing...' : 'Stop Recording'}
+            aria-label={isStopping ? 'Processing recording' : 'Stop recording'}
+            disabled={isStopping}
           >
-            <span className="recording-indicator-stop-icon">⏹️</span>
-            <span className="recording-indicator-stop-text">Stop</span>
+            {isStopping ? (
+              <>
+                <div className="recording-indicator-stop-spinner"></div>
+                <span className="recording-indicator-stop-text">Processing...</span>
+              </>
+            ) : (
+              <>
+                <span className="recording-indicator-stop-icon">⏹️</span>
+                <span className="recording-indicator-stop-text">Stop</span>
+              </>
+            )}
           </button>
         </div>
       </div>
@@ -198,9 +224,13 @@ export const RecordingIndicator: React.FC<RecordingIndicatorProps> = ({
       {/* Minimized State */}
       {isMinimized && (
         <div className="recording-indicator-minimized-content">
-          <div className="recording-indicator-minimized-dot"></div>
+          {isStopping ? (
+            <div className="recording-indicator-minimized-spinner"></div>
+          ) : (
+            <div className="recording-indicator-minimized-dot"></div>
+          )}
           <span className="recording-indicator-minimized-duration">
-            {formatRecordingDuration(duration)}
+            {isStopping ? 'Processing...' : formatRecordingDuration(duration)}
           </span>
         </div>
       )}

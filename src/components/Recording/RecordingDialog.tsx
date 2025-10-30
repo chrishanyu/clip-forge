@@ -103,7 +103,8 @@ export const RecordingDialog: React.FC<RecordingDialogProps> = ({ isOpen, onClos
     try {
       // For screen and PiP recordings, use the Rust backend
       await startRecording(settings);
-      // Dialog will be closed when recording starts via event listener
+      // Close the dialog after successfully starting recording
+      onClose();
     } catch (error) {
       console.error('Failed to start recording:', error);
     } finally {

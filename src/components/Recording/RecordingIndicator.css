@@ -42,6 +42,15 @@
   animation: recording-indicator-pulse 1s ease-in-out infinite;
 }
 
+.recording-indicator-spinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid #374151;
+  border-top-color: #3B82F6;
+  border-radius: 50%;
+  animation: recording-indicator-spin 0.8s linear infinite;
+}
+
 .recording-indicator-label {
   font-size: 14px;
   font-weight: 600;
@@ -139,6 +148,26 @@
   font-weight: 600;
 }
 
+.recording-indicator-stop-processing {
+  background: #6B7280;
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+.recording-indicator-stop-processing:hover {
+  background: #6B7280;
+  transform: none;
+}
+
+.recording-indicator-stop-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #374151;
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: recording-indicator-spin 0.8s linear infinite;
+}
+
 /* ============================================================================
    MINIMIZED STATE
    ============================================================================ */
@@ -163,6 +192,15 @@
   animation: recording-indicator-pulse 1s ease-in-out infinite;
 }
 
+.recording-indicator-minimized-spinner {
+  width: 8px;
+  height: 8px;
+  border: 2px solid #374151;
+  border-top-color: #3B82F6;
+  border-radius: 50%;
+  animation: recording-indicator-spin 0.8s linear infinite;
+}
+
 .recording-indicator-minimized-duration {
   color: #F9FAFB;
   font-size: 12px;
@@ -182,6 +220,15 @@
   50% {
     opacity: 0.5;
     transform: scale(1.1);
+  }
+}
+
+@keyframes recording-indicator-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
   }
 }
 
@@ -300,7 +347,10 @@
 
 @media (prefers-reduced-motion: reduce) {
   .recording-indicator-dot,
-  .recording-indicator-minimized-dot {
+  .recording-indicator-minimized-dot,
+  .recording-indicator-spinner,
+  .recording-indicator-minimized-spinner,
+  .recording-indicator-stop-spinner {
     animation: none;
   }
   
