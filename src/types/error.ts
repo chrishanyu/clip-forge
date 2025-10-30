@@ -24,6 +24,10 @@ export type ErrorType =
   | 'network'                   // Network-related errors
   | 'project'                   // Project management errors
   | 'timeline'                  // Timeline editing errors
+  | 'recording'                 // Recording-related errors
+  | 'camera'                    // Camera access errors
+  | 'permission'                // Permission-related errors
+  | 'device'                    // Device-related errors
   | 'unknown';                   // Catch-all for unexpected errors
 
 /**

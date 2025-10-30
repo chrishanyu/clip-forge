@@ -1,0 +1,362 @@
+/* ============================================================================
+   CAMERA PREVIEW STYLES
+   ============================================================================ */
+
+.camera-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: #111827;
+  border: 1px solid #374151;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.camera-preview-container {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  background: #000000;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.camera-preview-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #000000;
+  cursor: pointer;
+  transition: opacity 0.3s ease;
+  transform: scaleX(-1); /* Mirror the video horizontally for natural preview */
+}
+
+.camera-preview-video:hover {
+  opacity: 0.9;
+}
+
+.camera-preview-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background: #1F2937;
+  color: #9CA3AF;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.camera-preview-placeholder:hover {
+  background: #374151;
+  color: #F9FAFB;
+}
+
+.camera-preview-placeholder-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+  opacity: 0.7;
+}
+
+.camera-preview-placeholder-text {
+  text-align: center;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.camera-preview-placeholder-text small {
+  font-size: 11px;
+  opacity: 0.8;
+  font-weight: 400;
+}
+
+/* ============================================================================
+   OVERLAY
+   ============================================================================ */
+
+.camera-preview-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.7);
+  color: #ffffff;
+  gap: 16px;
+  transition: opacity 0.3s ease;
+}
+
+.camera-preview.active .camera-preview-overlay {
+  opacity: 0;
+}
+
+.camera-preview.active:hover .camera-preview-overlay {
+  opacity: 1;
+}
+
+/* ============================================================================
+   STATUS DISPLAY
+   ============================================================================ */
+
+.camera-preview-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.camera-preview-status-icon {
+  font-size: 32px;
+  opacity: 0.8;
+}
+
+.camera-preview-status-message {
+  font-size: 14px;
+  font-weight: 500;
+  color: #F9FAFB;
+}
+
+/* ============================================================================
+   RETRY BUTTON
+   ============================================================================ */
+
+.camera-preview-retry {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: #3B82F6;
+  border: none;
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.camera-preview-retry:hover:not(:disabled) {
+  background: #2563EB;
+  transform: translateY(-1px);
+}
+
+.camera-preview-retry:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.camera-preview-retry-icon {
+  font-size: 14px;
+}
+
+/* ============================================================================
+   CAMERA INFO
+   ============================================================================ */
+
+.camera-preview-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #1F2937;
+  border-top: 1px solid #374151;
+  font-size: 12px;
+}
+
+.camera-preview-camera-name {
+  color: #F9FAFB;
+  font-weight: 500;
+}
+
+.camera-preview-resolution {
+  color: #9CA3AF;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+/* ============================================================================
+   RECORDING TYPE INDICATOR
+   ============================================================================ */
+
+.camera-preview-type {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  background: #1E3A8A;
+  border-top: 1px solid #3B82F6;
+}
+
+.camera-preview-type-label {
+  color: #93C5FD;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ============================================================================
+   STATES
+   ============================================================================ */
+
+.camera-preview.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.camera-preview.disabled .camera-preview-video {
+  cursor: not-allowed;
+}
+
+.camera-preview.error {
+  border-color: #EF4444;
+}
+
+.camera-preview.error .camera-preview-type {
+  background: #7F1D1D;
+  border-color: #EF4444;
+}
+
+.camera-preview.error .camera-preview-type-label {
+  color: #FCA5A5;
+}
+
+.camera-preview.no-camera {
+  border-color: #6B7280;
+}
+
+.camera-preview.no-camera .camera-preview-type {
+  background: #374151;
+  border-color: #6B7280;
+}
+
+.camera-preview.no-camera .camera-preview-type-label {
+  color: #9CA3AF;
+}
+
+.camera-preview.active {
+  border-color: #10B981;
+}
+
+.camera-preview.active .camera-preview-type {
+  background: #064E3B;
+  border-color: #10B981;
+}
+
+.camera-preview.active .camera-preview-type-label {
+  color: #6EE7B7;
+}
+
+/* ============================================================================
+   RESPONSIVE DESIGN
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .camera-preview-container {
+    height: 160px;
+  }
+
+  .camera-preview-status-icon {
+    font-size: 24px;
+  }
+
+  .camera-preview-status-message {
+    font-size: 12px;
+  }
+
+  .camera-preview-retry {
+    padding: 6px 12px;
+    font-size: 11px;
+  }
+
+  .camera-preview-info {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  .camera-preview-type {
+    padding: 4px 10px;
+  }
+
+  .camera-preview-type-label {
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .camera-preview-container {
+    height: 120px;
+  }
+
+  .camera-preview-status-icon {
+    font-size: 20px;
+  }
+
+  .camera-preview-status-message {
+    font-size: 11px;
+  }
+}
+
+/* ============================================================================
+   ACCESSIBILITY
+   ============================================================================ */
+
+.camera-preview-video:focus {
+  outline: 2px solid #3B82F6;
+  outline-offset: 2px;
+}
+
+.camera-preview-retry:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #3B82F6;
+}
+
+/* ============================================================================
+   ANIMATIONS
+   ============================================================================ */
+
+.camera-preview-retry-icon {
+  transition: transform 0.2s ease;
+}
+
+.camera-preview-retry:hover:not(:disabled) .camera-preview-retry-icon {
+  transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .camera-preview-video,
+  .camera-preview-overlay,
+  .camera-preview-retry,
+  .camera-preview-retry-icon {
+    transition: none;
+  }
+}
+
+/* ============================================================================
+   HIGH CONTRAST MODE
+   ============================================================================ */
+
+@media (prefers-contrast: high) {
+  .camera-preview {
+    border: 2px solid #ffffff;
+  }
+  
+  .camera-preview.error {
+    border-color: #EF4444;
+  }
+  
+  .camera-preview.active {
+    border-color: #10B981;
+  }
+  
+  .camera-preview-overlay {
+    background: rgba(0, 0, 0, 0.9);
+  }
+}

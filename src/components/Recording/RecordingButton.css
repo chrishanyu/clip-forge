@@ -1,0 +1,245 @@
+/* ============================================================================
+   RECORDING BUTTON STYLES
+   ============================================================================ */
+
+.recording-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #EF4444, #DC2626);
+  border: none;
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.recording-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #DC2626, #B91C1C);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.4);
+}
+
+.recording-button:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+}
+
+.recording-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3);
+}
+
+.recording-button:focus-visible {
+  outline: 2px solid #EF4444;
+  outline-offset: 2px;
+}
+
+/* ============================================================================
+   ACTIVE RECORDING STATE
+   ============================================================================ */
+
+.recording-button-active {
+  background: linear-gradient(135deg, #10B981, #059669);
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+  animation: recording-pulse 2s ease-in-out infinite;
+}
+
+.recording-button-active:hover:not(:disabled) {
+  background: linear-gradient(135deg, #059669, #047857);
+  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.4);
+}
+
+.recording-button-active:focus {
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3);
+}
+
+.recording-button-active:focus-visible {
+  outline-color: #10B981;
+}
+
+/* ============================================================================
+   DISABLED STATE
+   ============================================================================ */
+
+.recording-button-disabled {
+  background: #6B7280;
+  cursor: not-allowed;
+  box-shadow: none;
+  opacity: 0.6;
+  animation: none;
+}
+
+.recording-button-disabled:hover {
+  background: #6B7280;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ============================================================================
+   BUTTON ELEMENTS
+   ============================================================================ */
+
+.recording-button-icon {
+  font-size: 16px;
+  transition: transform 0.2s ease;
+}
+
+.recording-button-active .recording-button-icon {
+  animation: recording-icon-pulse 1s ease-in-out infinite;
+}
+
+.recording-button-text {
+  font-weight: 600;
+  transition: opacity 0.2s ease;
+}
+
+.recording-button-indicator {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  font-size: 8px;
+  color: #ffffff;
+  animation: recording-dot-blink 1s ease-in-out infinite;
+  opacity: 0.8;
+}
+
+/* ============================================================================
+   ANIMATIONS
+   ============================================================================ */
+
+@keyframes recording-pulse {
+  0%, 100% {
+    box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+  }
+  50% {
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.5);
+  }
+}
+
+@keyframes recording-icon-pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+@keyframes recording-dot-blink {
+  0%, 50% {
+    opacity: 1;
+  }
+  51%, 100% {
+    opacity: 0.3;
+  }
+}
+
+/* ============================================================================
+   LOADING STATE
+   ============================================================================ */
+
+.recording-button.loading {
+  position: relative;
+  color: transparent;
+}
+
+.recording-button.loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  border: 2px solid transparent;
+  border-top: 2px solid #ffffff;
+  border-radius: 50%;
+  animation: recording-button-spin 1s linear infinite;
+}
+
+@keyframes recording-button-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* ============================================================================
+   RESPONSIVE DESIGN
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .recording-button {
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+
+  .recording-button-text {
+    display: none;
+  }
+
+  .recording-button-icon {
+    font-size: 18px;
+  }
+
+  .recording-button-indicator {
+    right: 6px;
+    font-size: 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  .recording-button {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .recording-button-icon {
+    font-size: 16px;
+  }
+}
+
+/* ============================================================================
+   ACCESSIBILITY
+   ============================================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .recording-button,
+  .recording-button-active,
+  .recording-button-icon,
+  .recording-button-indicator {
+    animation: none;
+  }
+  
+  .recording-button {
+    transition: none;
+  }
+}
+
+/* ============================================================================
+   HIGH CONTRAST MODE
+   ============================================================================ */
+
+@media (prefers-contrast: high) {
+  .recording-button {
+    border: 2px solid #ffffff;
+  }
+  
+  .recording-button-active {
+    border: 2px solid #ffffff;
+  }
+  
+  .recording-button-disabled {
+    border: 2px solid #9CA3AF;
+  }
+}

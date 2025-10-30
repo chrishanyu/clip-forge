@@ -6,7 +6,7 @@
 
 use crate::commands::{CommandError, CommandResult};
 use crate::recording::screen::{get_available_screens as get_screens, ScreenInfo};
-use crate::recording::camera::{get_available_cameras as get_cameras, CameraInfo};
+use crate::recording::camera::{get_available_cameras as get_cameras, CameraInfo, start_camera_preview, stop_camera_preview, get_camera_preview_data};
 use crate::recording::session::RECORDING_MANAGER;
 use crate::recording::permissions;
 use serde::{Deserialize, Serialize};
@@ -250,24 +250,32 @@ async fn start_screen_recording_impl(
     app_handle: tauri::AppHandle,
     settings: RecordingSettingsRequest,
 ) -> Result<String, CommandError> {
-    // Create session
-    let session_id = RECORDING_MANAGER
+    use crate::recording::screen::{start_screen_recording, ScreenRecordingSettings};
+    
+    // Convert settings to screen recording settings
+    let screen_settings = ScreenRecordingSettings {
+        screen_id: settings.screen_id
+            .ok_or_else(|| CommandError::validation_error("Screen ID is required for screen recording".to_string()))?,
+        quality: settings.quality,
+        frame_rate: settings.frame_rate,
+        audio_enabled: settings.audio_enabled,
+        capture_area: None, // TODO: Implement capture area from settings
+    };
+    
+    // Start actual screen recording
+    let session = start_screen_recording(screen_settings)
+        .map_err(|e| CommandError::validation_error(format!("Failed to start screen recording: {}", e)))?;
+    
+    // Store session in manager
+    RECORDING_MANAGER
         .create_session(crate::recording::session::RecordingSessionType::Screen)
         .map_err(|e| CommandError::validation_error(format!("Failed to create session: {}", e)))?;
     
-    // Start session
-    RECORDING_MANAGER
-        .start_session(&session_id)
-        .map_err(|e| CommandError::validation_error(format!("Failed to start recording: {}", e)))?;
-    
     // Emit event to frontend
-    app_handle.emit("recording-started", &session_id)
+    app_handle.emit("recording-started", &session.id)
         .map_err(|e| CommandError::validation_error(format!("Failed to emit event: {}", e)))?;
     
-    // TODO: Start actual AVFoundation screen recording
-    // For now, just return the session ID
-    
-    Ok(session_id)
+    Ok(session.id)
 }
 
 /// Start webcam recording implementation
@@ -355,4 +363,25 @@ pub async fn check_microphone_permission() -> CommandResult<bool> {
 #[tauri::command]
 pub async fn request_microphone_permission() -> CommandResult<bool> {
     Ok(permissions::request_microphone_permission())
+}
+
+/// Start camera preview
+#[tauri::command]
+pub async fn start_camera_preview_command(camera_id: String) -> CommandResult<String> {
+    start_camera_preview(&camera_id)
+        .map_err(|e| CommandError::validation_error(format!("Failed to start camera preview: {}", e)))
+}
+
+/// Stop camera preview
+#[tauri::command]
+pub async fn stop_camera_preview_command(session_id: String) -> CommandResult<()> {
+    stop_camera_preview(&session_id)
+        .map_err(|e| CommandError::validation_error(format!("Failed to stop camera preview: {}", e)))
+}
+
+/// Get camera preview data
+#[tauri::command]
+pub async fn get_camera_preview_data_command(session_id: String) -> CommandResult<(Vec<u8>, u32, u32)> {
+    get_camera_preview_data(&session_id)
+        .map_err(|e| CommandError::validation_error(format!("Failed to get camera preview data: {}", e)))
 }

@@ -66,7 +66,11 @@ src-tauri/src/
 │   ├── probe.rs       # Metadata extraction ✅
 │   ├── thumbnail.rs   # Thumbnail generation ✅
 │   └── export.rs      # Video export execution ✅
-└── recording/         # Recording features (Phase 2)
+└── recording/         # Screen recording features ✅ IN PROGRESS
+    ├── mod.rs         # Module exports
+    ├── screen.rs      # Screen recording (AVFoundation)
+    ├── session.rs     # Recording session management
+    └── permissions.rs # Permission handling
 ```
 
 ## State Management Pattern ✅ IMPLEMENTED
@@ -337,9 +341,40 @@ app.emit_all("export-progress", ExportProgress {
 ├── media/              # Imported clips cache (future)
 ├── thumbnails/         # Generated thumbnails
 │   └── {hash}.jpg
-├── recordings/         # Screen/webcam recordings (Phase 2)
+├── recordings/         # Screen/webcam recordings ✅ IN PROGRESS
 └── logs/              # Application logs (future)
 ```
+
+### Recording Architecture ✅ IN PROGRESS
+
+**Hybrid approach**: Screen recording (backend) + Webcam recording (frontend)
+
+#### Screen Recording (Rust Backend)
+- **Technology**: AVFoundation (macOS native)
+- **Implementation**: Rust commands with Tauri IPC
+- **Features**: Screen enumeration, display capture, permission handling
+- **Storage**: App data directory
+
+#### Webcam Recording (Frontend Web APIs)
+- **Technology**: getUserMedia + MediaRecorder
+- **Implementation**: React hooks with browser APIs
+- **Features**: Camera enumeration, live preview, recording
+- **Why Web APIs**: 
+  - Cross-platform compatibility
+  - No Objective-C bindings needed
+  - Native browser optimization
+  - Simpler maintenance
+
+#### Camera Preview
+- **Technology**: getUserMedia (Web APIs)
+- **Implementation**: Direct MediaStream to video element
+- **Benefits**: Real-time, no IPC overhead, built-in permission handling
+- **Configuration**: Tauri webview configured with `mediaDevices` API access
+
+#### Picture-in-Picture
+- **Combination**: Screen recording (AVFoundation) + webcam stream (getUserMedia)
+- **Composition**: Frontend combines both streams
+- **Recording**: Both sources recorded simultaneously
 
 ### Temporary Files
 ```
@@ -394,9 +429,9 @@ app.emit_all("export-progress", ExportProgress {
 ### Required Permissions ✅ CONFIGURED
 - File system: Read/write via Tauri file dialog (sandboxed)
 - Shell: Execute FFmpeg sidecar ✅ CONFIGURED
-- Screen recording: AVFoundation access (Phase 2)
-- Camera: AVFoundation access (Phase 2)
-- Microphone: Audio input (Phase 2)
+- Screen recording: AVFoundation access ✅ CONFIGURED (entitlements.plist)
+- Camera: Web APIs (getUserMedia) ✅ CONFIGURED (webview + entitlements)
+- Microphone: Web APIs (getUserMedia) ✅ CONFIGURED (webview + entitlements)
 
 ### Sandboxing ✅ CONFIGURED
 - All file access via Tauri APIs (no arbitrary file access)

@@ -12,6 +12,7 @@
   "app": {
     "windows": [
       {
+        "label": "main",
         "title": "ClipForge",
         "width": 1400,
         "height": 1000,
@@ -30,9 +31,11 @@
           "$APPLOCALDATA/**"
         ]
       },
-      "csp": "default-src 'self'; media-src 'self' asset: https://asset.localhost; img-src 'self' asset: https://asset.localhost data:;"
+      "csp": "default-src 'self'; media-src 'self' asset: https://asset.localhost blob: mediastream:; img-src 'self' asset: https://asset.localhost data: blob:; script-src 'self' 'unsafe-inline'; connect-src 'self' ws: wss: ipc: http://ipc.localhost;",
+      "capabilities": ["default"]
     },
-    "macOSPrivateApi": true
+    "macOSPrivateApi": true,
+    "withGlobalTauri": true
   },
   "bundle": {
     "active": true,
@@ -49,7 +52,11 @@
     "longDescription": "Record, edit, and export videos with ClipForge",
     "externalBin": [
       "bin/ffmpeg"
-    ]
+    ],
+    "macOS": {
+      "entitlements": "entitlements.plist",
+      "minimumSystemVersion": "10.13"
+    }
   },
   "plugins": {
     "shell": {

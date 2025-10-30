@@ -36,6 +36,7 @@ core-foundation = "0.9"
 core-foundation-sys = "0.8"
 core-media = "0.2"
 core-video = "0.1"
+avfoundation = "0.1"
 
 [dev-dependencies]
 tempfile = "3.8"

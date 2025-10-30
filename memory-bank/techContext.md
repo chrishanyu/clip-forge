@@ -104,6 +104,17 @@
   - Good codec support (H.264, H.265)
   - Simple API for control
 
+### Web APIs for Recording ✅ IN PROGRESS
+- **getUserMedia**: Camera access and live preview ✅ CONFIGURED
+- **MediaRecorder**: Webcam recording ✅ CONFIGURED
+- **MediaDevices**: Camera enumeration ✅ CONFIGURED
+- **Configuration**: Tauri webview allows mediaDevices API access
+- **Why chosen**:
+  - Cross-platform compatibility
+  - No native bindings needed
+  - Browser-optimized performance
+  - Simple maintenance
+
 ## Development Environment ✅ CONFIGURED
 
 ### Required Software ✅ INSTALLED
@@ -319,11 +330,25 @@ src-tauri/target/release/bundle/
 - `cargo instruments` (macOS profiler) ✅ READY
 - Activity Monitor for CPU/memory ✅ READY
 
+### Recording Technologies ✅ IN PROGRESS
+
+#### Screen Recording (Rust Backend)
+- **Technology**: AVFoundation (macOS native)
+- **Purpose**: Screen capture for screencasts
+- **Status**: In development
+- **Why**: Native macOS performance and quality
+
+#### Webcam Recording (Frontend)
+- **Technology**: getUserMedia + MediaRecorder (Web APIs)
+- **Purpose**: Camera recording and preview
+- **Status**: Configured and tested
+- **Why**: Cross-platform, no native bindings, simpler maintenance
+
 ## Known Technical Constraints ✅ UNDERSTOOD
 
 ### macOS-Specific ✅ UNDERSTOOD
 - Screen recording requires permission prompt (first use) ✅ UNDERSTOOD
-- Camera/mic access requires permission prompts ✅ UNDERSTOOD
+- Camera/mic access requires permission prompts (handled by browser) ✅ UNDERSTOOD
 - Must notarize for distribution (post-MVP) ✅ UNDERSTOOD
 - Code signing required for Gatekeeper (post-MVP) ✅ UNDERSTOOD
 

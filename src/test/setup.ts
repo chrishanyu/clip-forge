@@ -1,4 +1,5 @@
 import { vi } from 'vitest';
+import '@testing-library/jest-dom';
 
 // Mock process.env for tests
 vi.mock('process', () => ({

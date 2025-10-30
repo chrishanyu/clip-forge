@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useTimelineStore } from '@/stores/timelineStore';
 import { useExportStore } from '@/stores/exportStore';
+import { useRecordingStore } from '@/stores/recordingStore';
 import { ExportDialog, ExportProgress } from '@/components/Export';
+import { RecordingButton, RecordingDialog } from '@/components/Recording';
 import './AppHeader.css';
 
 // ============================================================================
@@ -17,6 +19,7 @@ export type { AppHeaderProps };
 export const AppHeader: React.FC<AppHeaderProps> = () => {
   const { tracks, getTimelineDuration } = useTimelineStore();
   const { isProgressVisible, hideProgress } = useExportStore();
+  const { isDialogOpen, closeRecordingDialog } = useRecordingStore();
   const [showExportDialog, setShowExportDialog] = useState(false);
 
   // ============================================================================
@@ -42,6 +45,10 @@ export const AppHeader: React.FC<AppHeaderProps> = () => {
 
   const handleProgressClose = () => {
     hideProgress();
+  };
+
+  const handleRecordingDialogClose = () => {
+    closeRecordingDialog();
   };
 
   // ============================================================================
@@ -93,6 +100,7 @@ export const AppHeader: React.FC<AppHeaderProps> = () => {
         </div>
 
         <div className="app-header-right">
+          <RecordingButton />
           <button
             className={`export-button ${!canExportTimeline ? 'export-button-disabled' : ''}`}
             onClick={handleExportClick}
@@ -116,6 +124,12 @@ export const AppHeader: React.FC<AppHeaderProps> = () => {
       <ExportProgress
         isVisible={isProgressVisible}
         onClose={handleProgressClose}
+      />
+
+      {/* Recording Dialog */}
+      <RecordingDialog
+        isOpen={isDialogOpen}
+        onClose={handleRecordingDialogClose}
       />
     </>
   );

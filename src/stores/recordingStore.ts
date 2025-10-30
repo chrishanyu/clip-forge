@@ -44,6 +44,7 @@ const createInitialProgress = (): RecordingProgress | null => null;
 
 const createInitialSession = (): RecordingSession | null => null;
 
+
 // ============================================================================
 // RECORDING STORE IMPLEMENTATION
 // ============================================================================
@@ -85,11 +86,53 @@ export const useRecordingStore = create<RecordingStore>()(
         }));
 
         try {
-          // Load screens
+          // Load screens from backend (Rust)
           const screens: ScreenInfo[] = await invoke('get_available_screens');
           
-          // Load cameras
-          const cameras: CameraInfo[] = await invoke('get_available_cameras');
+          // Load cameras using Web APIs
+          let cameras: CameraInfo[] = [];
+          
+          if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+            try {
+              // First, we need to request camera permission to get camera labels
+              // Without this, enumerateDevices returns devices but with empty labels
+              let tempStream: MediaStream | null = null;
+              
+              try {
+                // Request basic camera access to unlock device labels
+                tempStream = await navigator.mediaDevices.getUserMedia({ video: true });
+              } catch (permError) {
+                console.warn('⚠️ Camera permission denied or no camera available:', permError);
+                // Continue anyway - we might still get device IDs without labels
+              }
+              
+              // Now enumerate devices - labels should be available
+              const devices = await navigator.mediaDevices.enumerateDevices();
+              const videoDevices = devices.filter(device => device.kind === 'videoinput');
+              
+              cameras = videoDevices.map((device, index) => ({
+                id: device.deviceId,
+                name: device.label || `Camera ${index + 1}`,
+                isDefault: index === 0,
+                isAvailable: true,
+                capabilities: {
+                  maxWidth: 1920,
+                  maxHeight: 1080,
+                  supportedFormats: ['mp4', 'webm'],
+                  hasAudio: false,
+                },
+              }));
+              
+              // Clean up temporary stream
+              if (tempStream) {
+                tempStream.getTracks().forEach(track => track.stop());
+              }
+            } catch (error) {
+              console.error('❌ Error enumerating cameras:', error);
+            }
+          } else {
+            console.error('❌ navigator.mediaDevices or enumerateDevices not available!');
+          }
 
           set((state) => ({
             devices: {
@@ -102,7 +145,7 @@ export const useRecordingStore = create<RecordingStore>()(
           }));
         } catch (error) {
           const appError = createAppError(
-            'DEVICE_LOAD_FAILED',
+            'device',
             'Failed to load recording devices',
             error instanceof Error ? error.message : 'Unknown error'
           );

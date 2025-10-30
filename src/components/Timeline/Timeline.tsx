@@ -65,13 +65,6 @@ export const Timeline: React.FC<TimelineProps> = ({ className = '' }) => {
     
     const width = Math.max(minWidth, contentWidth);
     
-    console.log('[Timeline] Canvas width calculated:', {
-      timelineDuration,
-      contentWidth,
-      viewportWidth,
-      minWidth,
-      finalWidth: width
-    });
     return width;
   }, [timelineDuration, viewportWidth]);
 

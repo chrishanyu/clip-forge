@@ -126,33 +126,36 @@ The Recording Features module adds native screen and webcam recording capabiliti
 
 ### Hybrid Recording Architecture
 - **Screen Recording**: Use AVFoundation (Rust backend) for native macOS screen capture
-- **Webcam Recording**: Use getUserMedia + MediaRecorder API (frontend) for cross-platform camera access
+- **Webcam Recording**: Use Web APIs (getUserMedia + MediaRecorder) for cross-platform camera access
+- **Camera Preview**: Use Web APIs (getUserMedia) for live camera preview
 - **Picture-in-Picture**: Combine screen recording (AVFoundation) with webcam stream (getUserMedia) in frontend
-- **Audio Capture**: Use MediaRecorder API for webcam audio, AVFoundation for screen recording audio
+- **Audio Capture**: Use MediaRecorder API for webcam audio
 
-### Backend Implementation
-- Use AVFoundation bindings for macOS screen capture only
+### Backend Implementation (Screen Recording Only)
+- Use AVFoundation bindings for macOS screen capture
 - Implement Rust command handlers for screen recording operations
 - Leverage existing FFmpeg integration for thumbnail generation
 - Use existing file management patterns for media library integration
 
-### Frontend Implementation
-- Use Web APIs (getUserMedia, MediaRecorder) for webcam recording
-- Implement camera device enumeration and selection
+### Frontend Implementation (Webcam & Camera)
+- Use Web APIs (getUserMedia) for camera device enumeration
+- Use Web APIs (getUserMedia) for live camera preview
+- Use Web APIs (MediaRecorder) for webcam recording
 - Handle webcam recording state management in React
 - Combine screen and webcam streams for PiP recording
+- Configure Tauri webview to allow mediaDevices API access
 
 ### State Management
 - Create new `RecordingStore` using Zustand pattern
 - Integrate with existing `MediaStore` for file management
 - Maintain recording state separate from timeline state
-- Handle both backend (screen) and frontend (webcam) recording states
+- Handle backend (screen) and frontend (webcam) recording states
 
 ### File Handling
 - Save recordings to same location as imported media
 - Use existing thumbnail generation pipeline
 - Follow existing file naming and organization patterns
-- Handle both backend-generated and frontend-generated recording files
+- Handle recordings from both screen capture and webcam sources
 
 ### Performance
 - Optimize for quick recording start time (< 2 seconds)

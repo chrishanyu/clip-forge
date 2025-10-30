@@ -329,7 +329,16 @@ Not tested on:
 9. ✅ Timeline order preservation (COMPLETE)
 10. ✅ Temporary file management (COMPLETE)
 
-### Phase 7: Polish & Package
+### Phase 7: Recording Features ✅ IN PROGRESS
+1. ✅ Recording state management (RecordingStore)
+2. ✅ Recording UI components
+3. ✅ Camera preview (Web APIs - getUserMedia)
+4. ✅ Camera enumeration (Web APIs)
+5. 🟡 Webcam recording (MediaRecorder)
+6. 🟡 Screen recording (AVFoundation)
+7. 🟡 Picture-in-Picture recording
+
+### Phase 8: Polish & Package
 1. Add loading states
 2. Implement error handling
 3. Add keyboard shortcuts
