@@ -224,9 +224,17 @@ async fn export_video_internal(
         "0",
         "-i",
         &concat_file_path,
-        "-c",
-        "copy", // Copy streams without re-encoding
-        "-y",   // Overwrite output file
+        "-c:v",
+        "libx264", // Re-encode video to avoid stream copy issues
+        "-crf",
+        "18",      // High quality
+        "-preset",
+        "medium",
+        "-c:a",
+        "aac",     // Re-encode audio
+        "-b:a",
+        "192k",
+        "-y",      // Overwrite output file
         output_path,
     ];
 
@@ -514,9 +522,17 @@ async fn export_video_with_progress_internal(
         "0",
         "-i",
         &concat_file_path,
-        "-c",
-        "copy", // Copy streams without re-encoding
-        "-y",   // Overwrite output file
+        "-c:v",
+        "libx264", // Re-encode video to avoid stream copy issues
+        "-crf",
+        "18",      // High quality
+        "-preset",
+        "medium",
+        "-c:a",
+        "aac",     // Re-encode audio
+        "-b:a",
+        "192k",
+        "-y",      // Overwrite output file
         output_path,
     ];
 
@@ -851,6 +867,7 @@ pub async fn trim_clips_for_export(
                 trim_end: trim_duration,
                 track_id: clip.track_id.clone(),
                 trimmed_file_path: Some(temp_path),
+                original_duration: clip.original_duration, // Preserve original duration
             };
             trimmed_clips.push(trimmed_clip);
         } else {
@@ -898,6 +915,7 @@ pub async fn trim_clips_for_export_with_tracking(
                 trim_end: trim_duration,
                 track_id: clip.track_id.clone(),
                 trimmed_file_path: Some(temp_path),
+                original_duration: clip.original_duration, // Preserve original duration
             };
             trimmed_clips.push(trimmed_clip);
         } else {
