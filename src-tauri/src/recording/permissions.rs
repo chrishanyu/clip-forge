@@ -9,8 +9,8 @@
 /// Check if screen recording permission is granted
 pub fn check_screen_recording_permission() -> bool {
     // TODO: Implement actual permission check using CGPreflightScreenCaptureAccess()
-    // For now, return false to ensure we request permission
-    false
+    // For now, return true to allow recording (permission will be checked by AVFoundation)
+    true
 }
 
 /// Request screen recording permission
@@ -24,8 +24,8 @@ pub fn request_screen_recording_permission() -> bool {
 /// Check if camera permission is granted
 pub fn check_camera_permission() -> bool {
     // TODO: Implement actual permission check using AVCaptureDevice authorizationStatus
-    // For now, return false to ensure we request permission
-    false
+    // For now, return true to allow recording (permission will be checked by AVFoundation/getUserMedia)
+    true
 }
 
 /// Request camera permission
@@ -39,8 +39,8 @@ pub fn request_camera_permission() -> bool {
 /// Check if microphone permission is granted
 pub fn check_microphone_permission() -> bool {
     // TODO: Implement actual permission check using AVAudioSession authorizationStatus
-    // For now, return false to ensure we request permission
-    false
+    // For now, return true to allow recording (permission will be checked by AVFoundation/getUserMedia)
+    true
 }
 
 /// Request microphone permission

@@ -123,8 +123,10 @@ async fn extract_metadata_from_ffmpeg_output(
             CommandError::ffmpeg_error(format!("Failed to create duration regex: {}", e))
         })?;
 
+    // Updated regex to avoid matching hex values like 0x31637661
+    // Now specifically looks for resolution after pixel format (e.g., yuv420p)
     let video_stream_regex =
-        regex::Regex::new(r"Stream #\d+:\d+.*Video: (\w+).*?(\d+)x(\d+).*?(\d+(?:\.\d+)?) fps")
+        regex::Regex::new(r"Stream #\d+:\d+.*Video: (\w+).*?,\s*(\d+)x(\d+).*?(\d+(?:\.\d+)?) fps")
             .map_err(|e| {
                 CommandError::ffmpeg_error(format!("Failed to create video stream regex: {}", e))
             })?;

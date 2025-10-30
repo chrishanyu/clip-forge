@@ -24,6 +24,7 @@ import {
   WebcamRecordingSettings
 } from '@/types';
 import { useMediaStore } from './mediaStore';
+import { useProjectStore } from './projectStore';
 import { WebcamRecorder } from '@/utils/recordingUtils';
 
 // ============================================================================
@@ -255,17 +256,39 @@ export const useRecordingStore = create<RecordingStore>()(
         }));
 
         try {
+          // Get current project ID
+          const currentProject = useProjectStore.getState().currentProject;
+          if (!currentProject?.id) {
+            throw new Error('No active project. Please create or open a project first.');
+          }
+
+          // Transform settings to match Rust backend expectations (snake_case)
+          const rustSettings = {
+            recording_type: settings.type,
+            screen_id: 'screenId' in settings ? settings.screenId : null,
+            camera_id: 'cameraId' in settings ? settings.cameraId : null,
+            quality: settings.quality,
+            frame_rate: settings.frameRate,
+            audio_enabled: settings.audioEnabled,
+            audio_device_id: settings.audioDeviceId || null,
+            show_preview: 'showPreview' in settings ? settings.showPreview : null,
+            pip_position: 'pipPosition' in settings ? settings.pipPosition : null,
+            pip_size: 'pipSize' in settings ? settings.pipSize : null,
+            project_id: currentProject.id,
+          };
+
           // Start recording via Tauri command
-          const result = await invoke('start_recording', { settings });
+          const result = await invoke<{ session_id: string; file_path?: string; thumbnail_path?: string; status: string }>('start_recording', { settings: rustSettings });
           
-          if (result && typeof result === 'object' && 'filePath' in result) {
+          if (result && typeof result === 'object' && 'session_id' in result) {
             set((state) => ({
               currentSession: state.currentSession ? {
                 ...state.currentSession,
+                id: result.session_id, // Update with Rust backend's session ID
                 status: 'recording',
-                filePath: result.filePath as string,
+                filePath: result.file_path,
               } : null,
-              progress: createRecordingProgress(session.id, { isRecording: true }),
+              progress: createRecordingProgress(result.session_id, { isRecording: true }),
               isRecordingIndicatorVisible: true,
               error: null,
             }));
@@ -304,6 +327,7 @@ export const useRecordingStore = create<RecordingStore>()(
 
       stopRecording: async () => {
         const currentSession = get().currentSession;
+        
         if (!currentSession || !canStopRecording(currentSession)) {
           const error = createAppError(
             'NO_ACTIVE_RECORDING',
@@ -322,8 +346,27 @@ export const useRecordingStore = create<RecordingStore>()(
         }));
 
         try {
-          // Stop recording via Tauri command - returns file path and thumbnail path
-          const result = await invoke<{ session_id: string; file_path?: string; thumbnail_path?: string; status: string }>('stop_recording', { sessionId: currentSession.id });
+          // Stop recording via Tauri command - returns file path, thumbnail path, and metadata
+          // NOTE: Tauri automatically converts camelCase (JS) to snake_case (Rust)
+          const result = await invoke<{ 
+            session_id: string; 
+            file_path?: string; 
+            thumbnail_path?: string; 
+            status: string;
+            metadata?: {
+              duration: number;
+              width: number;
+              height: number;
+              fps: number;
+              codec: string;
+              bitrate: number;
+              file_size: number;
+              format: string;
+              has_audio: boolean;
+              audio_codec?: string;
+              audio_bitrate?: number;
+            }
+          }>('stop_recording', { sessionId: currentSession.id });
           
           set((state) => ({
             currentSession: state.currentSession ? {
@@ -336,18 +379,33 @@ export const useRecordingStore = create<RecordingStore>()(
             error: null,
           }));
 
-          // Automatically add the recorded video to the media library
-          if (result.file_path) {
+          // Add the recording to the media library
+          // The file is already in the project assets directory, so we just create the clip entry
+          if (result.file_path && result.thumbnail_path && result.metadata) {
             try {
-              await useMediaStore.getState().importVideo(result.file_path);
-              console.log('✅ Recording automatically added to media library');
-              if (result.thumbnail_path) {
-                console.log('✅ Thumbnail generated:', result.thumbnail_path);
-              }
-            } catch (importError) {
-              console.error('⚠️ Failed to auto-import recording to media library:', importError);
-              // Don't fail the stop operation if import fails
-              // User can manually import if needed
+              const clip = {
+                id: `recording_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                filepath: result.file_path,
+                filename: result.file_path.split('/').pop() || 'recording.mp4',
+                metadata: {
+                  duration: result.metadata.duration,
+                  width: result.metadata.width,
+                  height: result.metadata.height,
+                  fps: result.metadata.fps,
+                  codec: result.metadata.codec,
+                  container: result.metadata.format,
+                  fileSize: result.metadata.file_size,
+                  thumbnailPath: result.thumbnail_path,
+                  filepath: result.file_path,
+                  filename: result.file_path.split('/').pop() || 'recording.mp4',
+                  createdAt: new Date().toISOString(),
+                },
+                createdAt: new Date().toISOString(),
+                isLoading: false,
+              };
+              useMediaStore.getState().addClip(clip);
+            } catch (error) {
+              console.error('Failed to add recording to media library:', error);
             }
           }
         } catch (error) {
@@ -382,6 +440,7 @@ export const useRecordingStore = create<RecordingStore>()(
 
         try {
           // Pause recording via Tauri command
+          // NOTE: Tauri automatically converts camelCase (JS) to snake_case (Rust)
           await invoke('pause_recording', { sessionId: currentSession.id });
           
           set((state) => ({
@@ -418,6 +477,7 @@ export const useRecordingStore = create<RecordingStore>()(
 
         try {
           // Resume recording via Tauri command
+          // NOTE: Tauri automatically converts camelCase (JS) to snake_case (Rust)
           await invoke('resume_recording', { sessionId: currentSession.id });
           
           set((state) => ({
@@ -701,6 +761,26 @@ export const useRecordingStore = create<RecordingStore>()(
                   // FFmpeg failed (expected for browser-generated WebM)
                   // Create MediaClip manually with the metadata we already have
                   const session = get().currentSession;
+                  
+                  // Generate thumbnail for the recording
+                  let thumbnailPath = '';
+                  try {
+                    const thumbnailResponse = await invoke<{ thumbnail_path: string | null; error: string | null }>(
+                      'generate_video_thumbnail',
+                      {
+                        request: {
+                          file_path: filePath,
+                          timestamp: 1.0,
+                          width: 320,
+                          height: 180,
+                        },
+                      }
+                    );
+                    thumbnailPath = thumbnailResponse.thumbnail_path || '';
+                  } catch (thumbnailError) {
+                    // Thumbnail generation failed, continue without thumbnail
+                  }
+                  
                   const mediaClip = {
                     id: `webcam_${Date.now()}`,
                     filepath: filePath,
@@ -715,7 +795,7 @@ export const useRecordingStore = create<RecordingStore>()(
                       fileSize: recordedBlob.size,
                       codec: 'vp9',
                       container: 'webm',
-                      thumbnailPath: '', // No thumbnail
+                      thumbnailPath,
                       createdAt: new Date().toISOString(),
                     },
                     createdAt: new Date().toISOString(),

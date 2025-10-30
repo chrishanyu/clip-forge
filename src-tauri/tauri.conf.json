@@ -28,7 +28,8 @@
         "enable": true,
         "scope": [
           "$APPDATA/**",
-          "$APPLOCALDATA/**"
+          "$APPLOCALDATA/**",
+          "$HOME/Library/Application Support/com.clipforge.app/**"
         ]
       },
       "csp": "default-src 'self'; media-src 'self' asset: https://asset.localhost blob: mediastream:; img-src 'self' asset: https://asset.localhost data: blob:; script-src 'self' 'unsafe-inline'; connect-src 'self' ws: wss: ipc: http://ipc.localhost;",

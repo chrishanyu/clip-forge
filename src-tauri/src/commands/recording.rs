@@ -32,6 +32,7 @@ pub struct RecordingSettingsRequest {
     pub show_preview: Option<bool>,
     pub pip_position: Option<String>,
     pub pip_size: Option<String>,
+    pub project_id: String, // Project ID for saving recordings
 }
 
 /// Recording session response
@@ -41,6 +42,7 @@ pub struct RecordingSessionResponse {
     pub file_path: Option<String>,
     pub thumbnail_path: Option<String>,
     pub status: String,
+    pub metadata: Option<crate::ffmpeg::probe::VideoMetadata>,
 }
 
 /// Recording progress update
@@ -82,17 +84,19 @@ pub async fn start_recording(
     
     // Check and request permissions
     match permissions::check_permissions_for_recording_type(&settings.recording_type) {
-        Ok(_) => {
-            // Permissions are granted
-        }
+        Ok(_) => {}
         Err(_) => {
             // Request permissions
             permissions::request_permissions_for_recording_type(&settings.recording_type)
-                .map_err(|e| CommandError::validation_error(format!("Permission error: {}", e)))?;
+                .map_err(|e| {
+                    CommandError::validation_error(format!("Permission error: {}", e))
+                })?;
             
             // Check again after requesting
             permissions::check_permissions_for_recording_type(&settings.recording_type)
-                .map_err(|e| CommandError::validation_error(format!("Permission not granted: {}", e)))?;
+                .map_err(|e| {
+                    CommandError::validation_error(format!("Permission not granted: {}", e))
+                })?;
         }
     }
     
@@ -119,6 +123,7 @@ pub async fn start_recording(
         file_path: None,
         thumbnail_path: None,
         status: "recording".to_string(),
+        metadata: None,
     })
 }
 
@@ -131,24 +136,52 @@ pub async fn stop_recording(
     // Get session info before stopping to retrieve the file path
     let session_info = RECORDING_MANAGER
         .get_session(&session_id)
-        .map_err(|e| CommandError::validation_error(format!("Failed to get session info: {}", e)))?;
+        .map_err(|e| {
+            CommandError::validation_error(format!("Failed to get session info: {}", e))
+        })?;
     
     let file_path = session_info.file_path.clone();
     
-    // Stop the recording session
+    // Stop the FFmpeg recording process if it's a screen recording
+    use crate::recording::process_manager::PROCESS_MANAGER;
+    if PROCESS_MANAGER.is_process_running(&session_id) {
+        PROCESS_MANAGER.stop_process(&session_id)
+            .map_err(|e| {
+                CommandError::validation_error(format!("Failed to stop recording process: {}", e))
+            })?;
+    }
+    
+    // Stop the recording session in manager
     RECORDING_MANAGER
         .stop_session(&session_id)
-        .map_err(|e| CommandError::validation_error(format!("Failed to stop recording: {}", e)))?;
+        .map_err(|e| {
+            CommandError::validation_error(format!("Failed to stop recording: {}", e))
+        })?;
+    
+    // Extract video metadata
+    let video_metadata = if let Some(ref path) = file_path {
+        match crate::ffmpeg::probe::extract_video_metadata(
+            app_handle.clone(),
+            crate::ffmpeg::probe::ExtractMetadataRequest {
+                file_path: path.clone(),
+            }
+        ).await {
+            Ok(metadata_response) => metadata_response.metadata,
+            Err(e) => {
+                eprintln!("Failed to extract metadata: {}", e.message);
+                None
+            }
+        }
+    } else {
+        None
+    };
     
     // Generate thumbnail if we have a file path
     let thumbnail_path = if let Some(ref path) = file_path {
         match generate_default_thumbnail(&app_handle, path).await {
-            Ok(thumb_path) => {
-                println!("✅ Generated thumbnail for recording: {}", thumb_path);
-                Some(thumb_path)
-            }
+            Ok(thumb_path) => Some(thumb_path),
             Err(e) => {
-                eprintln!("⚠️ Failed to generate thumbnail for recording: {}", e.message);
+                eprintln!("Failed to generate thumbnail: {}", e.message);
                 None
             }
         }
@@ -158,13 +191,16 @@ pub async fn stop_recording(
     
     // Emit event to frontend
     app_handle.emit("recording-stopped", &session_id)
-        .map_err(|e| CommandError::validation_error(format!("Failed to emit event: {}", e)))?;
+        .map_err(|e| {
+            CommandError::validation_error(format!("Failed to emit event: {}", e))
+        })?;
     
     Ok(RecordingSessionResponse {
         session_id,
         file_path,
         thumbnail_path,
         status: "stopped".to_string(),
+        metadata: video_metadata,
     })
 }
 
@@ -232,6 +268,7 @@ pub async fn get_recording_session(
         file_path: session.file_path,
         thumbnail_path: None, // Thumbnail is generated only when stopping recording
         status: format!("{:?}", session.status).to_lowercase(),
+        metadata: None,
     })
 }
 
@@ -284,32 +321,86 @@ async fn start_screen_recording_impl(
     app_handle: tauri::AppHandle,
     settings: RecordingSettingsRequest,
 ) -> Result<String, CommandError> {
-    use crate::recording::screen::{start_screen_recording, ScreenRecordingSettings};
+    use crate::recording::screen::ScreenRecordingSettings;
     
     // Convert settings to screen recording settings
     let screen_settings = ScreenRecordingSettings {
         screen_id: settings.screen_id
-            .ok_or_else(|| CommandError::validation_error("Screen ID is required for screen recording".to_string()))?,
+            .ok_or_else(|| {
+                CommandError::validation_error("Screen ID is required for screen recording".to_string())
+            })?,
         quality: settings.quality,
         frame_rate: settings.frame_rate,
         audio_enabled: settings.audio_enabled,
         capture_area: None, // TODO: Implement capture area from settings
     };
     
-    // Start actual screen recording
-    let session = start_screen_recording(screen_settings)
-        .map_err(|e| CommandError::validation_error(format!("Failed to start screen recording: {}", e)))?;
-    
-    // Store session in manager
-    RECORDING_MANAGER
+    // Create session in manager first
+    let manager_session_id = RECORDING_MANAGER
         .create_session(crate::recording::session::RecordingSessionType::Screen)
-        .map_err(|e| CommandError::validation_error(format!("Failed to create session: {}", e)))?;
+        .map_err(|e| {
+            CommandError::validation_error(format!("Failed to create session: {}", e))
+        })?;
+    
+    // Get FFmpeg sidecar path
+    // In dev mode, use the binary from src-tauri/bin/
+    // In production, use the bundled binary
+    let ffmpeg_path = if cfg!(debug_assertions) {
+        // Development mode - use source tree path
+        let manifest_dir = std::env::var("CARGO_MANIFEST_DIR")
+            .map_err(|e| CommandError::validation_error(format!("Failed to get manifest dir: {}", e)))?;
+        let dev_path = std::path::PathBuf::from(manifest_dir).join("bin/ffmpeg");
+        dev_path.to_string_lossy().to_string()
+    } else {
+        // Production mode - use bundled sidecar
+        app_handle.path().resolve("bin/ffmpeg", tauri::path::BaseDirectory::Resource)
+            .map_err(|e| {
+                CommandError::validation_error(format!("Failed to find FFmpeg: {}", e))
+            })?
+            .to_string_lossy()
+            .to_string()
+    };
+    
+    // Verify FFmpeg binary exists and is executable
+    if !std::path::Path::new(&ffmpeg_path).exists() {
+        return Err(CommandError::validation_error(format!("FFmpeg binary not found at: {}", ffmpeg_path)));
+    }
+    
+    // Start actual screen recording with the manager's session ID
+    let recording_session = crate::recording::screen::start_screen_recording_with_id(
+        manager_session_id.clone(),
+        screen_settings,
+        ffmpeg_path,
+        settings.project_id
+    ).map_err(|e| {
+        // Clean up manager session if recording fails
+        let _ = RECORDING_MANAGER.stop_session(&manager_session_id);
+        CommandError::validation_error(format!("Failed to start screen recording: {}", e))
+    })?;
+    
+    // Update manager session with file path
+    if let Some(ref file_path) = recording_session.file_path {
+        RECORDING_MANAGER
+            .update_file_path(&manager_session_id, file_path.clone())
+            .map_err(|e| {
+                CommandError::validation_error(format!("Failed to update file path: {}", e))
+            })?;
+    }
+    
+    // Start the session in manager
+    RECORDING_MANAGER
+        .start_session(&manager_session_id)
+        .map_err(|e| {
+            CommandError::validation_error(format!("Failed to start session: {}", e))
+        })?;
     
     // Emit event to frontend
-    app_handle.emit("recording-started", &session.id)
-        .map_err(|e| CommandError::validation_error(format!("Failed to emit event: {}", e)))?;
+    app_handle.emit("recording-started", &manager_session_id)
+        .map_err(|e| {
+            CommandError::validation_error(format!("Failed to emit event: {}", e))
+        })?;
     
-    Ok(session.id)
+    Ok(manager_session_id)
 }
 
 /// Start webcam recording implementation

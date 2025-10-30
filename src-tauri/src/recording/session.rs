@@ -74,7 +74,7 @@ impl RecordingSessionManager {
         
         let session_info = RecordingSessionInfo {
             id: session_id.clone(),
-            session_type,
+            session_type: session_type.clone(),
             status: RecordingSessionStatus::Idle,
             start_time: None,
             duration: 0.0,
@@ -83,7 +83,7 @@ impl RecordingSessionManager {
         };
 
         let mut sessions = self.sessions.lock().map_err(|e| format!("Failed to lock sessions: {}", e))?;
-        sessions.insert(session_id.clone(), session_info);
+        sessions.insert(session_id.clone(), session_info.clone());
         
         Ok(session_id)
     }
@@ -167,7 +167,7 @@ impl RecordingSessionManager {
         let mut sessions = self.sessions.lock().map_err(|e| format!("Failed to lock sessions: {}", e))?;
         
         if let Some(session) = sessions.get_mut(session_id) {
-            session.file_path = Some(file_path);
+            session.file_path = Some(file_path.clone());
         } else {
             return Err("Session not found".to_string());
         }

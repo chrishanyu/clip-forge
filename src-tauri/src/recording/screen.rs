@@ -136,23 +136,24 @@ fn get_display_name(display_id: u32, index: usize) -> String {
     }
 }
 
-/// Start screen recording
-pub fn start_screen_recording(
+/// Start screen recording with provided session ID and project ID
+pub fn start_screen_recording_with_id(
+    session_id: String,
     settings: ScreenRecordingSettings,
+    ffmpeg_path: String,
+    project_id: String,
 ) -> Result<ScreenRecordingSession, String> {
-    let session_id = format!("screen_recording_{}", chrono::Utc::now().timestamp_millis());
-    let mut session = ScreenRecordingSession::new(session_id, settings.clone());
+    let mut session = ScreenRecordingSession::new(session_id.clone(), settings.clone());
     
-    // Generate output file path
-    let output_dir = std::env::temp_dir().join("clipforge_recordings");
-    std::fs::create_dir_all(&output_dir).map_err(|e| format!("Failed to create output directory: {}", e))?;
+    // Generate output file path in project assets directory
+    let output_dir = get_project_assets_directory(&project_id)?;
     
-    let filename = format!("screen_recording_{}.mp4", session.id);
+    let filename = format!("recording_{}.mp4", session.id);
     let file_path = output_dir.join(filename);
     session.file_path = Some(file_path.to_string_lossy().to_string());
     
-    // Start actual screen recording using AVFoundation
-    match start_avfoundation_recording(&settings, &file_path) {
+    // Start actual screen recording using FFmpeg + AVFoundation
+    match start_avfoundation_recording(&session_id, &settings, &file_path, &ffmpeg_path) {
         Ok(_) => {
             session.is_recording = true;
             session.start_time = Some(std::time::Instant::now());
@@ -162,42 +163,122 @@ pub fn start_screen_recording(
     }
 }
 
-/// Start AVFoundation screen recording
+/// Get the project assets directory
+fn get_project_assets_directory(project_id: &str) -> Result<std::path::PathBuf, String> {
+    let home_dir = dirs::home_dir().ok_or_else(|| "Could not find home directory".to_string())?;
+    
+    let assets_dir = home_dir
+        .join("Library")
+        .join("Application Support")
+        .join("com.clipforge.app")
+        .join("projects")
+        .join(project_id)
+        .join("assets");
+    
+    // Create assets directory if it doesn't exist
+    std::fs::create_dir_all(&assets_dir)
+        .map_err(|e| format!("Failed to create assets directory: {}", e))?;
+    
+    Ok(assets_dir)
+}
+
+/// Start screen recording (generates own session ID)
+/// Note: This function requires FFmpeg to be in system PATH and uses a default project
+/// This is primarily for testing - production code should use start_screen_recording_with_id
+pub fn start_screen_recording(
+    settings: ScreenRecordingSettings,
+    project_id: String,
+) -> Result<ScreenRecordingSession, String> {
+    // Try to find FFmpeg in system PATH
+    let ffmpeg_path = which::which("ffmpeg")
+        .map(|p| p.to_string_lossy().to_string())
+        .map_err(|_| "FFmpeg not found in system PATH. Please use start_screen_recording_with_id instead.".to_string())?;
+    
+    let session_id = format!("screen_recording_{}", chrono::Utc::now().timestamp_millis());
+    start_screen_recording_with_id(session_id, settings, ffmpeg_path, project_id)
+}
+
+/// Start AVFoundation screen recording using FFmpeg
 fn start_avfoundation_recording(
+    session_id: &str,
     settings: &ScreenRecordingSettings,
     output_path: &PathBuf,
+    ffmpeg_path: &str,
 ) -> Result<(), String> {
-    // For MVP, we'll implement a simplified screen recording
-    // In a full implementation, this would use AVFoundation's AVCaptureScreenInput
+    use crate::recording::process_manager::PROCESS_MANAGER;
     
-    // Create a simple screen capture using CoreGraphics
-    // This is a basic implementation - a full version would use AVFoundation
-    
-    // Get the display ID from settings
+    // Get the display ID from settings  
     let display_id = settings.screen_id
         .strip_prefix("screen-")
         .ok_or("Invalid screen ID format")?
         .parse::<u32>()
         .map_err(|_| "Invalid screen ID")?;
     
-    // For now, we'll create a placeholder file to simulate recording
-    // In a real implementation, this would start the actual screen capture
-    let placeholder_content = format!(
-        "Screen recording started for display {} at {}\nSettings: {:?}",
-        display_id,
-        chrono::Utc::now().to_rfc3339(),
-        settings
-    );
+    // Build FFmpeg command for screen recording
+    // Using AVFoundation input on macOS
+    let mut args = vec![
+        "-f".to_string(),
+        "avfoundation".to_string(),
+        "-capture_cursor".to_string(),
+        "1".to_string(),
+        "-capture_mouse_clicks".to_string(),
+        "1".to_string(),
+    ];
     
-    std::fs::write(output_path, placeholder_content)
-        .map_err(|e| format!("Failed to create recording file: {}", e))?;
+    // Frame rate
+    args.push("-r".to_string());
+    args.push(settings.frame_rate.to_string());
     
-    // In a full implementation, we would:
-    // 1. Create AVCaptureSession
-    // 2. Add AVCaptureScreenInput with the specified display
-    // 3. Configure video settings (quality, frame rate)
-    // 4. Add audio input if enabled
-    // 5. Start recording to the output file
+    // Input device (screen capture)
+    // For AVFoundation screen capture, we need to use "Capture screen N" format
+    // where N is 0 for the first screen, 1 for the second, etc.
+    // The format is: -i "Capture screen N:"
+    let screen_index = if display_id > 0 { display_id - 1 } else { 0 };
+    let input_device = format!("Capture screen {}:", screen_index);
+    
+    args.push("-i".to_string());
+    args.push(input_device);
+    
+    // Video codec and quality settings
+    args.push("-c:v".to_string());
+    args.push("libx264".to_string());
+    
+    // Quality preset based on settings
+    let preset = match settings.quality.as_str() {
+        "low" => "veryfast",
+        "medium" => "medium",
+        "high" => "slow",
+        _ => "medium",
+    };
+    args.push("-preset".to_string());
+    args.push(preset.to_string());
+    
+    // CRF (Constant Rate Factor) for quality
+    let crf = match settings.quality.as_str() {
+        "low" => "28",
+        "medium" => "23",
+        "high" => "18",
+        _ => "23",
+    };
+    args.push("-crf".to_string());
+    args.push(crf.to_string());
+    
+    // Pixel format
+    args.push("-pix_fmt".to_string());
+    args.push("yuv420p".to_string());
+    
+    // Overwrite output file if it exists
+    args.push("-y".to_string());
+    
+    // Output file
+    args.push(output_path.to_string_lossy().to_string());
+    
+    // Start FFmpeg process using process manager
+    PROCESS_MANAGER.start_process(
+        session_id.to_string(),
+        ffmpeg_path.to_string(),
+        args,
+    )?;
     
     Ok(())
 }
