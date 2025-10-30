@@ -133,7 +133,8 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
             duration: timelineClip.duration,
             trim_start: timelineClip.trimStart,
             trim_end: timelineClip.trimEnd,
-            track_id: track.id
+            track_id: track.id,
+            original_duration: mediaClip.metadata.duration // Pass the original video duration from the source MediaClip
           };
         })
       );

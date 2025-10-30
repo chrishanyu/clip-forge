@@ -32,6 +32,7 @@ pub struct ExportClip {
     pub trim_end: f64,   // Trim end in source video
     pub track_id: String, // Track ID for ordering
     pub trimmed_file_path: Option<String>, // Path to trimmed file if available
+    pub original_duration: f64, // Original duration of the source video (REQUIRED for proper trim detection)
 }
 
 /// Export settings
@@ -640,9 +641,8 @@ pub fn validate_export_clips_trim_data(clips: &[ExportClip]) -> CommandResult<()
     }
 
     for (index, clip) in clips.iter().enumerate() {
-        // For MVP, we'll assume all clips have the same duration as their trim_end
-        // In a full implementation, we'd need to probe the video to get actual duration
-        let original_duration = clip.trim_end; // This is a simplification for MVP
+        // Use the actual original_duration from the source video
+        let original_duration = clip.original_duration;
         
         validate_trim_data(
             clip.trim_start,
@@ -661,7 +661,7 @@ pub fn get_clips_needing_trimming(clips: &[ExportClip]) -> Vec<usize> {
         .iter()
         .enumerate()
         .filter_map(|(index, clip)| {
-            let original_duration = clip.trim_end; // MVP simplification
+            let original_duration = clip.original_duration;
             if needs_trimming(clip.trim_start, clip.trim_end, original_duration) {
                 Some(index)
             } else {
@@ -677,7 +677,7 @@ pub fn get_clips_not_needing_trimming(clips: &[ExportClip]) -> Vec<usize> {
         .iter()
         .enumerate()
         .filter_map(|(index, clip)| {
-            let original_duration = clip.trim_end; // MVP simplification
+            let original_duration = clip.original_duration;
             if !needs_trimming(clip.trim_start, clip.trim_end, original_duration) {
                 Some(index)
             } else {
@@ -1607,6 +1607,7 @@ mod tests {
             trim_end: 10.0,
             track_id: "track1".to_string(),
             trimmed_file_path: None,
+            original_duration: 10.0,
         },
             ExportClip {
                 file_path: "clip2.mp4".to_string(),
@@ -1616,6 +1617,7 @@ mod tests {
                 trim_end: 20.0,
             track_id: "track1".to_string(),
             trimmed_file_path: None,
+            original_duration: 20.0,
         },
         ];
 
@@ -1642,6 +1644,7 @@ mod tests {
             trim_end: 10.0,
             track_id: "track1".to_string(),
             trimmed_file_path: None,
+            original_duration: 10.0,
         },
         ];
 
@@ -1665,6 +1668,7 @@ mod tests {
             trim_end: 10.0,
             track_id: "track1".to_string(),
             trimmed_file_path: None,
+            original_duration: 10.0,
         },
         ];
 
@@ -1900,6 +1904,7 @@ mod tests {
                 trim_end: 5.0,
             track_id: "track1".to_string(),
             trimmed_file_path: None,
+            original_duration: 10.0,
         },
             ExportClip {
                 file_path: "clip2.mp4".to_string(),
@@ -1909,6 +1914,7 @@ mod tests {
                 trim_end: 5.0,
             track_id: "track1".to_string(),
             trimmed_file_path: None,
+            original_duration: 10.0,
         },
         ];
 
@@ -1935,6 +1941,7 @@ mod tests {
                 trim_end: 5.0,
             track_id: "track1".to_string(),
             trimmed_file_path: None,
+            original_duration: 10.0,
         },
         ];
 
@@ -1954,6 +1961,7 @@ mod tests {
                 trim_end: 5.0, // No trimming needed
             track_id: "track1".to_string(),
             trimmed_file_path: None,
+            original_duration: 10.0,
         },
             ExportClip {
                 file_path: "clip2.mp4".to_string(),
@@ -1963,6 +1971,7 @@ mod tests {
                 trim_end: 5.0, // Trimming needed
             track_id: "track1".to_string(),
             trimmed_file_path: None,
+            original_duration: 10.0,
         },
             ExportClip {
                 file_path: "clip3.mp4".to_string(),
@@ -1972,6 +1981,7 @@ mod tests {
                 trim_end: 2.0, // No trimming needed
             track_id: "track1".to_string(),
             trimmed_file_path: None,
+            original_duration: 10.0,
         },
         ];
 
@@ -1990,6 +2000,7 @@ mod tests {
                 trim_end: 5.0, // No trimming needed
             track_id: "track1".to_string(),
             trimmed_file_path: None,
+            original_duration: 10.0,
         },
             ExportClip {
                 file_path: "clip2.mp4".to_string(),
@@ -1999,6 +2010,7 @@ mod tests {
                 trim_end: 5.0, // Trimming needed
             track_id: "track1".to_string(),
             trimmed_file_path: None,
+            original_duration: 10.0,
         },
             ExportClip {
                 file_path: "clip3.mp4".to_string(),
@@ -2008,6 +2020,7 @@ mod tests {
                 trim_end: 2.0, // No trimming needed
             track_id: "track1".to_string(),
             trimmed_file_path: None,
+            original_duration: 10.0,
         },
         ];
 
@@ -2252,6 +2265,7 @@ mod tests {
                 trim_end: 5.0,
             track_id: "track1".to_string(),
             trimmed_file_path: None,
+            original_duration: 10.0,
         },
         ExportClip {
             file_path: "clip1.mp4".to_string(),
@@ -2261,6 +2275,7 @@ mod tests {
             trim_end: 10.0,
             track_id: "track1".to_string(),
             trimmed_file_path: None,
+            original_duration: 10.0,
         },
         ExportClip {
             file_path: "clip2.mp4".to_string(),
@@ -2270,6 +2285,7 @@ mod tests {
             trim_end: 5.0,
             track_id: "track1".to_string(),
             trimmed_file_path: None,
+            original_duration: 10.0,
         },
         ];
 
@@ -2294,6 +2310,7 @@ mod tests {
                 trim_end: 5.0,
             track_id: "track2".to_string(),
             trimmed_file_path: None,
+            original_duration: 10.0,
         },
         ExportClip {
             file_path: "clip1.mp4".to_string(),
@@ -2303,6 +2320,7 @@ mod tests {
             trim_end: 10.0,
             track_id: "track1".to_string(),
             trimmed_file_path: None,
+            original_duration: 10.0,
         },
         ExportClip {
             file_path: "clip2.mp4".to_string(),
@@ -2312,6 +2330,7 @@ mod tests {
             trim_end: 5.0,
             track_id: "track1".to_string(),
             trimmed_file_path: None,
+            original_duration: 10.0,
         },
             ExportClip {
                 file_path: "clip4.mp4".to_string(),
@@ -2321,6 +2340,7 @@ mod tests {
                 trim_end: 5.0,
             track_id: "track2".to_string(),
             trimmed_file_path: None,
+            original_duration: 10.0,
         },
         ];
 
@@ -2348,6 +2368,7 @@ mod tests {
             trim_end: 10.0,
             track_id: "track1".to_string(),
             trimmed_file_path: None,
+            original_duration: 10.0,
         },
         ExportClip {
             file_path: "clip2.mp4".to_string(),
@@ -2357,6 +2378,7 @@ mod tests {
             trim_end: 5.0,
             track_id: "track1".to_string(),
             trimmed_file_path: None,
+            original_duration: 10.0,
         },
             ExportClip {
                 file_path: "clip3.mp4".to_string(),
@@ -2366,6 +2388,7 @@ mod tests {
                 trim_end: 5.0,
             track_id: "track1".to_string(),
             trimmed_file_path: None,
+            original_duration: 10.0,
         },
         ];
 
@@ -2384,6 +2407,7 @@ mod tests {
                 trim_end: 5.0,
             track_id: "track1".to_string(),
             trimmed_file_path: None,
+            original_duration: 10.0,
         },
             ExportClip {
                 file_path: "clip2.mp4".to_string(),
@@ -2393,6 +2417,7 @@ mod tests {
                 trim_end: 10.0,
             track_id: "track1".to_string(),
             trimmed_file_path: None,
+            original_duration: 10.0,
         },
         ];
 
@@ -2412,6 +2437,7 @@ mod tests {
             trim_end: 10.0,
             track_id: "track1".to_string(),
             trimmed_file_path: None,
+            original_duration: 10.0,
         },
         ExportClip {
             file_path: "clip2.mp4".to_string(),
@@ -2421,6 +2447,7 @@ mod tests {
             trim_end: 5.0,
             track_id: "track1".to_string(),
             trimmed_file_path: None,
+            original_duration: 10.0,
         },
         ];
 
@@ -2439,6 +2466,7 @@ mod tests {
             trim_end: 10.0,
             track_id: "track1".to_string(),
             trimmed_file_path: None,
+            original_duration: 10.0,
         },
             ExportClip {
                 file_path: "clip2.mp4".to_string(),
@@ -2448,6 +2476,7 @@ mod tests {
                 trim_end: 5.0,
             track_id: "track1".to_string(),
             trimmed_file_path: None,
+            original_duration: 10.0,
         },
         ];
 
@@ -2467,6 +2496,7 @@ mod tests {
             trim_end: 10.0,
             track_id: "track1".to_string(),
             trimmed_file_path: None,
+            original_duration: 10.0,
         },
         ExportClip {
             file_path: "clip2.mp4".to_string(),
@@ -2476,6 +2506,7 @@ mod tests {
             trim_end: 5.0,
             track_id: "track1".to_string(),
             trimmed_file_path: None,
+            original_duration: 10.0,
         },
         ];
 
@@ -2501,6 +2532,7 @@ mod tests {
             trim_end: 10.0,
             track_id: "track1".to_string(),
             trimmed_file_path: None,
+            original_duration: 10.0,
         },
         ExportClip {
             file_path: "clip2.mp4".to_string(),
@@ -2510,6 +2542,7 @@ mod tests {
             trim_end: 5.0,
             track_id: "track1".to_string(),
             trimmed_file_path: None,
+            original_duration: 10.0,
         },
         ];
 
@@ -2536,6 +2569,7 @@ mod tests {
                 trim_end: 10.0,
             track_id: "track1".to_string(),
             trimmed_file_path: None,
+            original_duration: 10.0,
         },
         ];
 
@@ -2555,6 +2589,7 @@ mod tests {
                 trim_end: 10.0,
             track_id: "track1".to_string(),
             trimmed_file_path: None,
+            original_duration: 10.0,
         },
         ];
 
@@ -2574,6 +2609,7 @@ mod tests {
                 trim_end: 5.0,
             track_id: "track1".to_string(),
             trimmed_file_path: None,
+            original_duration: 10.0,
         },
             ExportClip {
                 file_path: "clip2.mp4".to_string(),
@@ -2583,6 +2619,7 @@ mod tests {
                 trim_end: 10.0,
             track_id: "track1".to_string(),
             trimmed_file_path: None,
+            original_duration: 10.0,
         },
         ];
 
@@ -2602,6 +2639,7 @@ mod tests {
             trim_end: 10.0,
             track_id: "track1".to_string(),
             trimmed_file_path: None,
+            original_duration: 10.0,
         },
         ExportClip {
             file_path: "clip2.mp4".to_string(),
@@ -2611,6 +2649,7 @@ mod tests {
             trim_end: 5.0,
             track_id: "track1".to_string(),
             trimmed_file_path: None,
+            original_duration: 10.0,
         },
             ExportClip {
                 file_path: "clip3.mp4".to_string(),
@@ -2620,6 +2659,7 @@ mod tests {
                 trim_end: 5.0,
             track_id: "track2".to_string(),
             trimmed_file_path: None,
+            original_duration: 10.0,
         },
         ];
 
@@ -2638,6 +2678,7 @@ mod tests {
                 trim_end: 5.0,
             track_id: "track1".to_string(),
             trimmed_file_path: None,
+            original_duration: 10.0,
         },
             ExportClip {
                 file_path: "clip2.mp4".to_string(),
@@ -2647,6 +2688,7 @@ mod tests {
                 trim_end: 10.0,
             track_id: "track1".to_string(),
             trimmed_file_path: None,
+            original_duration: 10.0,
         },
         ];
 
@@ -2666,6 +2708,7 @@ mod tests {
             trim_end: 10.0,
             track_id: "track1".to_string(),
             trimmed_file_path: None,
+            original_duration: 10.0,
         },
             ExportClip {
                 file_path: "clip2.mp4".to_string(),
@@ -2675,6 +2718,7 @@ mod tests {
                 trim_end: 5.0,
             track_id: "track2".to_string(),
             trimmed_file_path: None,
+            original_duration: 10.0,
         },
             ExportClip {
                 file_path: "clip3.mp4".to_string(),
@@ -2684,6 +2728,7 @@ mod tests {
                 trim_end: 5.0,
             track_id: "track1".to_string(),
             trimmed_file_path: None,
+            original_duration: 10.0,
         },
         ];
 
@@ -2723,6 +2768,7 @@ mod tests {
             trim_end: 10.0,
             track_id: "track1".to_string(),
             trimmed_file_path: None,
+            original_duration: 10.0,
         },
             ExportClip {
                 file_path: "clip2.mp4".to_string(),
@@ -2732,6 +2778,7 @@ mod tests {
                 trim_end: 5.0,
             track_id: "track2".to_string(),
             trimmed_file_path: None,
+            original_duration: 10.0,
         },
         ];
 

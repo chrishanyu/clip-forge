@@ -34,6 +34,7 @@ pub struct TimelineExportClip {
     pub trim_start: f64,  // Trim start in source video
     pub trim_end: f64,    // Trim end in source video
     pub track_id: String, // Track ID (for future use)
+    pub original_duration: f64, // Original duration of the source video
 }
 
 /// Export progress update
@@ -91,6 +92,7 @@ pub async fn export_timeline(
             trim_end: clip.trim_end,
             track_id: clip.track_id,
             trimmed_file_path: None, // Will be set during trimming process
+            original_duration: clip.original_duration,
         })
         .collect();
 
@@ -126,6 +128,7 @@ pub async fn export_timeline_with_progress(
             trim_end: clip.trim_end,
             track_id: clip.track_id,
             trimmed_file_path: None, // Will be set during trimming process
+            original_duration: clip.original_duration,
         })
         .collect();
 
@@ -166,6 +169,7 @@ pub async fn estimate_export_info(request: ExportTimelineRequest) -> CommandResu
             trim_end: clip.trim_end,
             track_id: clip.track_id,
             trimmed_file_path: None, // Will be set during trimming process
+            original_duration: clip.original_duration,
         })
         .collect();
 
