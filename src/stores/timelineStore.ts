@@ -19,6 +19,7 @@ interface TimelineStore {
   // Computed Timeline Dimensions
   contentEndTime: number;        // Rightmost clip end time across all tracks
   timelineDuration: number;      // Calculated timeline duration (min 60s, includes buffer)
+  contentDuration: number;       // Actual content duration (no minimum, no buffer)
   
   // Actions - Playback
   setPlayhead: (time: number) => void;
@@ -51,6 +52,7 @@ interface TimelineStore {
   
   // Actions - Timeline Info
   getTimelineDuration: () => number;
+  getContentDuration: () => number;
   toggleSnapToGrid: () => void;
   setSnapInterval: (interval: number) => void;
   
@@ -85,6 +87,7 @@ const calculateTotalDuration = (tracks: TimelineTrack[]): number => {
   );
 };
 
+
 /**
  * Calculate timeline dimensions (contentEndTime and timelineDuration)
  * Used for canvas-based timeline architecture
@@ -92,6 +95,7 @@ const calculateTotalDuration = (tracks: TimelineTrack[]): number => {
 const calculateTimelineDimensions = (tracks: TimelineTrack[]): {
   contentEndTime: number;
   timelineDuration: number;
+  contentDuration: number;
 } => {
   const MIN_VISIBLE_DURATION = 60; // Always show at least 60 seconds
   const BUFFER_AFTER_CONTENT = 30; // 30 seconds of empty space after last clip
@@ -109,7 +113,10 @@ const calculateTimelineDimensions = (tracks: TimelineTrack[]): {
     contentEndTime + BUFFER_AFTER_CONTENT
   );
   
-  return { contentEndTime, timelineDuration };
+  // Content duration = actual content duration (no minimum, no buffer)
+  const contentDuration = contentEndTime;
+  
+  return { contentEndTime, timelineDuration, contentDuration };
 };
 
 // ============================================================================
@@ -148,6 +155,7 @@ export const useTimelineStore = create<TimelineStore>()(
       // Timeline dimensions (empty timeline shows 60s minimum)
       contentEndTime: 0,
       timelineDuration: 60,
+      contentDuration: 0,
       
       // Actions - Playback
       setPlayhead: (time: number) => {
@@ -241,6 +249,7 @@ export const useTimelineStore = create<TimelineStore>()(
               totalDuration: calculateTotalDuration(updatedTracks),
               contentEndTime: dimensions.contentEndTime,
               timelineDuration: dimensions.timelineDuration,
+              contentDuration: dimensions.contentDuration,
               error: null,
             };
           },
@@ -264,6 +273,7 @@ export const useTimelineStore = create<TimelineStore>()(
               totalDuration: calculateTotalDuration(updatedTracks),
               contentEndTime: dimensions.contentEndTime,
               timelineDuration: dimensions.timelineDuration,
+              contentDuration: dimensions.contentDuration,
               selectedClipId: state.selectedClipId === clipId ? null : state.selectedClipId,
             };
           },
@@ -332,6 +342,7 @@ export const useTimelineStore = create<TimelineStore>()(
               totalDuration: calculateTotalDuration(updatedTracks),
               contentEndTime: dimensions.contentEndTime,
               timelineDuration: dimensions.timelineDuration,
+              contentDuration: dimensions.contentDuration,
             };
           },
           false,
@@ -370,6 +381,7 @@ export const useTimelineStore = create<TimelineStore>()(
               totalDuration: calculateTotalDuration(updatedTracks),
               contentEndTime: dimensions.contentEndTime,
               timelineDuration: dimensions.timelineDuration,
+              contentDuration: dimensions.contentDuration,
             };
           },
           false,
@@ -432,6 +444,7 @@ export const useTimelineStore = create<TimelineStore>()(
               totalDuration: calculateTotalDuration(updatedTracks),
               contentEndTime: dimensions.contentEndTime,
               timelineDuration: dimensions.timelineDuration,
+              contentDuration: dimensions.contentDuration,
             };
           },
           false,
@@ -528,6 +541,11 @@ export const useTimelineStore = create<TimelineStore>()(
       getTimelineDuration: () => {
         const state = get();
         return state.timelineDuration;
+      },
+      
+      getContentDuration: () => {
+        const state = get();
+        return state.contentDuration;
       },
       
       // Actions - Error Handling
@@ -630,6 +648,7 @@ export const useTimelineActions = () =>
     toggleSnapToGrid: state.toggleSnapToGrid,
     setSnapInterval: state.setSnapInterval,
     getTimelineDuration: state.getTimelineDuration,
+    getContentDuration: state.getContentDuration,
     setError: state.setError,
     clearError: state.clearError,
   }));

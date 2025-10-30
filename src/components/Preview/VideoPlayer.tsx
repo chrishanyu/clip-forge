@@ -19,6 +19,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ className = '' }) => {
   const {
     videoRef,
     currentClip,
+    isVideoLoaded,
     videoError,
     isMuted,
     loadingState,
@@ -149,7 +150,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ className = '' }) => {
           playsInline
           muted={isMuted}
         />
-        {!currentClip && (
+        {!currentClip && !isVideoLoaded && (
           <div className="video-placeholder">
             <div className="placeholder-icon">🎬</div>
             <div className="placeholder-text">No video selected</div>

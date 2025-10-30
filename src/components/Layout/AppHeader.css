@@ -45,6 +45,7 @@
   align-items: center;
   flex: 1;
   justify-content: center;
+  margin: 0 40px;
 }
 
 .timeline-info {
@@ -149,6 +150,10 @@
 
   .app-logo-icon {
     font-size: 20px;
+  }
+
+  .app-header-center {
+    margin: 0 20px;
   }
 
   .timeline-info {

@@ -43,7 +43,7 @@ export interface VideoLoadingProgress {
 
 interface UseVideoPlaybackReturn {
   // Video element ref
-  videoRef: React.RefObject<HTMLVideoElement>;
+  videoRef: React.RefObject<HTMLVideoElement | null>;
   
   // Playback state
   isVideoLoaded: boolean;
@@ -332,11 +332,12 @@ export const useVideoPlayback = (): UseVideoPlaybackReturn => {
         }
       }
     } else {
-      // No active clip, pause video
+      // No active clip, just pause video but keep source to show last frame
       setCurrentClip(null);
       if (videoRef.current) {
         videoRef.current.pause();
-        videoRef.current.src = '';
+        // Keep the current source so the player shows the last frame
+        // This avoids MEDIA_ERR_SRC_NOT_SUPPORTED errors and provides better UX
       }
     }
   }, [playhead, getClipById]);
@@ -683,7 +684,7 @@ export const useVideoPlayback = (): UseVideoPlaybackReturn => {
     const currentSrc = video.src;
     
     // Force reload by clearing and setting src again
-    video.src = '';
+    video.removeAttribute('src');
     video.load();
     
     setTimeout(() => {

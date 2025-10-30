@@ -17,7 +17,7 @@ interface AppHeaderProps {
 export type { AppHeaderProps };
 
 export const AppHeader: React.FC<AppHeaderProps> = () => {
-  const { tracks, getTimelineDuration } = useTimelineStore();
+  const { tracks, contentDuration } = useTimelineStore();
   const { isProgressVisible, hideProgress } = useExportStore();
   const { isDialogOpen, closeRecordingDialog } = useRecordingStore();
   const [showExportDialog, setShowExportDialog] = useState(false);
@@ -63,7 +63,7 @@ export const AppHeader: React.FC<AppHeaderProps> = () => {
 
   const getTimelineInfo = () => {
     const totalClips = tracks.reduce((sum, track) => sum + track.clips.length, 0);
-    const duration = getTimelineDuration();
+    const duration = contentDuration;
     return { totalClips, duration };
   };
 
