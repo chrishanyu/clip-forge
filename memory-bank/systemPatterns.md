@@ -32,7 +32,7 @@ src/
 │   ├── Timeline/       # Timeline editor components ✅ COMPLETE
 │   ├── Preview/        # Video player and controls ✅ COMPLETE
 │   ├── Export/         # Export dialog and progress ✅ COMPLETE
-│   └── Layout/         # App layout and structure ❌ PENDING
+│   └── Layout/         # App layout and structure ✅ COMPLETE
 ├── stores/             # Zustand state management ✅ COMPLETE
 │   ├── mediaStore.ts   # Imported clips state (19 tests)
 │   ├── timelineStore.ts # Timeline composition state (29 tests)
@@ -66,7 +66,11 @@ src-tauri/src/
 │   ├── probe.rs       # Metadata extraction ✅
 │   ├── thumbnail.rs   # Thumbnail generation ✅
 │   └── export.rs      # Video export execution ✅
-└── recording/         # Recording features (Phase 2)
+└── recording/         # Screen recording features ✅ IN PROGRESS
+    ├── mod.rs         # Module exports
+    ├── screen.rs      # Screen recording (AVFoundation)
+    ├── session.rs     # Recording session management
+    └── permissions.rs # Permission handling
 ```
 
 ## State Management Pattern ✅ IMPLEMENTED
@@ -261,10 +265,12 @@ let concat_content = clips.iter()
 ffmpeg -f concat -safe 0 -i concat.txt -c copy output.mp4
 ```
 
-**Limitations**:
-- All clips must have same codec/resolution
-- No trim support (MVP limitation)
-- Fast but inflexible
+**Features**:
+- Timeline order preservation with track-based sorting
+- Chronological validation and overlap detection
+- Temporary file management with cleanup
+- Clean production logging without debug spam
+- Comprehensive error handling and validation
 **Status**: ✅ Implemented and tested
 
 ### 5. Thumbnail Generation Pattern ✅ IMPLEMENTED
@@ -298,6 +304,11 @@ app.emit_all("export-progress", ExportProgress {
 })?;
 ```
 
+**Features**:
+- Real-time progress updates with time estimates
+- Export cancellation with process termination
+- Error handling with user-friendly messages
+- Clean production logging without debug spam
 **Status**: ✅ Export store with progress tracking implemented
 
 ### 7. Drag and Drop Pattern ✅ IMPLEMENTED
@@ -330,18 +341,51 @@ app.emit_all("export-progress", ExportProgress {
 ├── media/              # Imported clips cache (future)
 ├── thumbnails/         # Generated thumbnails
 │   └── {hash}.jpg
-├── recordings/         # Screen/webcam recordings (Phase 2)
+├── recordings/         # Screen/webcam recordings ✅ IN PROGRESS
 └── logs/              # Application logs (future)
 ```
+
+### Recording Architecture ✅ IN PROGRESS
+
+**Hybrid approach**: Screen recording (backend) + Webcam recording (frontend)
+
+#### Screen Recording (Rust Backend)
+- **Technology**: AVFoundation (macOS native)
+- **Implementation**: Rust commands with Tauri IPC
+- **Features**: Screen enumeration, display capture, permission handling
+- **Storage**: App data directory
+
+#### Webcam Recording (Frontend Web APIs)
+- **Technology**: getUserMedia + MediaRecorder
+- **Implementation**: React hooks with browser APIs
+- **Features**: Camera enumeration, live preview, recording
+- **Why Web APIs**: 
+  - Cross-platform compatibility
+  - No Objective-C bindings needed
+  - Native browser optimization
+  - Simpler maintenance
+
+#### Camera Preview
+- **Technology**: getUserMedia (Web APIs)
+- **Implementation**: Direct MediaStream to video element
+- **Benefits**: Real-time, no IPC overhead, built-in permission handling
+- **Configuration**: Tauri webview configured with `mediaDevices` API access
+
+#### Picture-in-Picture
+- **Combination**: Screen recording (AVFoundation) + webcam stream (getUserMedia)
+- **Composition**: Frontend combines both streams
+- **Recording**: Both sources recorded simultaneously
 
 ### Temporary Files
 ```
 /tmp/clipforge/
 ├── export/            # Temp files during export
-└── concat_*.txt       # FFmpeg concat lists
+├── concat_*.txt       # FFmpeg concat lists
+├── trimmed_clip_*.mp4 # Trimmed video clips (if needed)
+└── temp_*.txt         # Other temporary files
 ```
 
-**Cleanup**: Remove temp files after export completion or app exit
+**Cleanup**: Robust temporary file management with automatic cleanup after export completion, failure, or app exit
 
 ## Error Handling Strategy ✅ IMPLEMENTED
 
@@ -385,9 +429,9 @@ app.emit_all("export-progress", ExportProgress {
 ### Required Permissions ✅ CONFIGURED
 - File system: Read/write via Tauri file dialog (sandboxed)
 - Shell: Execute FFmpeg sidecar ✅ CONFIGURED
-- Screen recording: AVFoundation access (Phase 2)
-- Camera: AVFoundation access (Phase 2)
-- Microphone: Audio input (Phase 2)
+- Screen recording: AVFoundation access ✅ CONFIGURED (entitlements.plist)
+- Camera: Web APIs (getUserMedia) ✅ CONFIGURED (webview + entitlements)
+- Microphone: Web APIs (getUserMedia) ✅ CONFIGURED (webview + entitlements)
 
 ### Sandboxing ✅ CONFIGURED
 - All file access via Tauri APIs (no arbitrary file access)
@@ -397,9 +441,11 @@ app.emit_all("export-progress", ExportProgress {
 ## Testing Patterns ✅ IMPLEMENTED
 
 ### Unit Testing Strategy ✅ COMPLETE
-- **155 tests** across 7 files
+- **155+ tests** across 7+ files
 - **Store tests**: Complete coverage of all state management
 - **Utility tests**: Complete coverage of all helper functions
+- **Backend tests**: FFmpeg integration and command handlers
+- **Export tests**: Timeline order preservation and temporary file management
 - **Edge cases**: Floating-point precision, boundary conditions, error handling
 - **Real-world scenarios**: Practical usage patterns and workflows
 

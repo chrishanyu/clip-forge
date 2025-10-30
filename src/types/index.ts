@@ -37,5 +37,44 @@ export {
   generateAssetFilename
 } from './project';
 
+// Recording types
+export type {
+  RecordingType,
+  RecordingStatus,
+  DeviceType,
+  ScreenInfo,
+  CameraInfo,
+  CameraCapabilities,
+  BaseRecordingSettings,
+  ScreenRecordingSettings,
+  WebcamRecordingSettings,
+  PiPRecordingSettings,
+  RecordingSettings,
+  RecordingQuality,
+  CaptureArea,
+  PiPPosition,
+  PiPSize,
+  RecordingSession,
+  RecordingProgress,
+  AvailableDevices,
+  RecordingState,
+  RecordingActions,
+  RecordingEvent
+} from './recording';
+
+export {
+  createRecordingSession,
+  createScreenRecordingSettings,
+  createWebcamRecordingSettings,
+  createPiPRecordingSettings,
+  createRecordingProgress,
+  validateRecordingSettings,
+  getDefaultRecordingSettings,
+  formatRecordingDuration,
+  isRecordingActive,
+  canStartRecording,
+  canStopRecording
+} from './recording';
+
 // Common utility types
 export type { TimeRange, Dimensions, Position } from './common';

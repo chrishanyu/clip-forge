@@ -1,0 +1,332 @@
+/* ============================================================================
+   RECORDING INDICATOR STYLES
+   ============================================================================ */
+
+.recording-indicator {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: #1F2937;
+  border: 1px solid #374151;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  backdrop-filter: blur(8px);
+  transition: all 0.3s ease;
+  min-width: 280px;
+  max-width: 400px;
+}
+
+.recording-indicator-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+}
+
+/* ============================================================================
+   RECORDING STATUS
+   ============================================================================ */
+
+.recording-indicator-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.recording-indicator-dot {
+  width: 12px;
+  height: 12px;
+  background: #EF4444;
+  border-radius: 50%;
+  animation: recording-indicator-pulse 1s ease-in-out infinite;
+}
+
+.recording-indicator-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #F9FAFB;
+}
+
+/* ============================================================================
+   RECORDING INFO
+   ============================================================================ */
+
+.recording-indicator-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+}
+
+.recording-indicator-duration {
+  color: #F9FAFB;
+  font-weight: 600;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  background: #111827;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #374151;
+}
+
+.recording-indicator-filesize {
+  color: #9CA3AF;
+  font-weight: 500;
+}
+
+/* ============================================================================
+   CONTROLS
+   ============================================================================ */
+
+.recording-indicator-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.recording-indicator-minimize {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: 1px solid #6B7280;
+  border-radius: 6px;
+  color: #9CA3AF;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.recording-indicator-minimize:hover {
+  background: #374151;
+  color: #F9FAFB;
+  border-color: #9CA3AF;
+}
+
+.recording-indicator-stop {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: #EF4444;
+  border: none;
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex: 1;
+  justify-content: center;
+}
+
+.recording-indicator-stop:hover {
+  background: #DC2626;
+  transform: translateY(-1px);
+}
+
+.recording-indicator-stop:active {
+  transform: translateY(0);
+}
+
+.recording-indicator-stop-icon {
+  font-size: 14px;
+}
+
+.recording-indicator-stop-text {
+  font-weight: 600;
+}
+
+/* ============================================================================
+   MINIMIZED STATE
+   ============================================================================ */
+
+.recording-indicator-minimized {
+  min-width: auto;
+  width: auto;
+}
+
+.recording-indicator-minimized-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+}
+
+.recording-indicator-minimized-dot {
+  width: 8px;
+  height: 8px;
+  background: #EF4444;
+  border-radius: 50%;
+  animation: recording-indicator-pulse 1s ease-in-out infinite;
+}
+
+.recording-indicator-minimized-duration {
+  color: #F9FAFB;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+/* ============================================================================
+   ANIMATIONS
+   ============================================================================ */
+
+@keyframes recording-indicator-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.1);
+  }
+}
+
+/* ============================================================================
+   RESPONSIVE DESIGN
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .recording-indicator {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+    min-width: auto;
+    max-width: none;
+  }
+
+  .recording-indicator-content {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .recording-indicator-label {
+    font-size: 13px;
+  }
+
+  .recording-indicator-info {
+    font-size: 11px;
+    gap: 8px;
+  }
+
+  .recording-indicator-duration {
+    padding: 3px 6px;
+    font-size: 11px;
+  }
+
+  .recording-indicator-stop {
+    padding: 6px 12px;
+    font-size: 11px;
+  }
+
+  .recording-indicator-stop-text {
+    display: none;
+  }
+
+  .recording-indicator-minimize {
+    width: 28px;
+    height: 28px;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 480px) {
+  .recording-indicator {
+    top: 5px;
+    right: 5px;
+    left: 5px;
+  }
+
+  .recording-indicator-content {
+    padding: 10px;
+    gap: 8px;
+  }
+
+  .recording-indicator-label {
+    font-size: 12px;
+  }
+
+  .recording-indicator-info {
+    font-size: 10px;
+  }
+
+  .recording-indicator-duration {
+    padding: 2px 4px;
+    font-size: 10px;
+  }
+}
+
+/* ============================================================================
+   ACCESSIBILITY
+   ============================================================================ */
+
+.recording-indicator:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
+.recording-indicator-minimize:focus,
+.recording-indicator-stop:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #3B82F6;
+}
+
+/* ============================================================================
+   HIGH CONTRAST MODE
+   ============================================================================ */
+
+@media (prefers-contrast: high) {
+  .recording-indicator {
+    border: 2px solid #ffffff;
+    background: #000000;
+  }
+  
+  .recording-indicator-dot,
+  .recording-indicator-minimized-dot {
+    background: #FF0000;
+  }
+  
+  .recording-indicator-stop {
+    border: 2px solid #ffffff;
+  }
+}
+
+/* ============================================================================
+   REDUCED MOTION
+   ============================================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .recording-indicator-dot,
+  .recording-indicator-minimized-dot {
+    animation: none;
+  }
+  
+  .recording-indicator,
+  .recording-indicator-stop,
+  .recording-indicator-minimize {
+    transition: none;
+  }
+}
+
+/* ============================================================================
+   DRAG HANDLE (for future enhancement)
+   ============================================================================ */
+
+.recording-indicator::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #EF4444, #DC2626);
+  border-radius: 12px 12px 0 0;
+  cursor: move;
+}
+
+.recording-indicator-minimized::before {
+  height: 2px;
+}

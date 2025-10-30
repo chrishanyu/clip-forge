@@ -109,13 +109,6 @@ const calculateTimelineDimensions = (tracks: TimelineTrack[]): {
     contentEndTime + BUFFER_AFTER_CONTENT
   );
   
-  console.log('[TimelineStore] Timeline dimensions calculated:', {
-    numClips: allClips.length,
-    contentEndTime,
-    timelineDuration,
-    buffer: BUFFER_AFTER_CONTENT
-  });
-  
   return { contentEndTime, timelineDuration };
 };
 

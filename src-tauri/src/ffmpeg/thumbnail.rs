@@ -6,7 +6,7 @@
 
 use crate::commands::{get_thumbnails_dir, hash_file_path, CommandError, CommandResult};
 use serde::{Deserialize, Serialize};
-use tauri_plugin_shell::ShellExt;
+use tauri::Manager;
 
 // ============================================================================
 // DATA STRUCTURES
@@ -173,30 +173,60 @@ async fn generate_thumbnail_internal(
         return Ok(thumbnail_path.to_string_lossy().to_string());
     }
 
-    // Get FFmpeg sidecar
-    let sidecar = app_handle.shell().sidecar("ffmpeg").map_err(|e| {
-        CommandError::ffmpeg_error(format!("Failed to create FFmpeg sidecar: {}", e))
-    })?;
+    // Resolve FFmpeg path (same logic as in recording)
+    let ffmpeg_path = if cfg!(debug_assertions) {
+        // Development mode - use source tree path
+        let manifest_dir = std::env::var("CARGO_MANIFEST_DIR")
+            .map_err(|e| CommandError::validation_error(format!("Failed to get manifest dir: {}", e)))?;
+        let dev_path = std::path::PathBuf::from(manifest_dir).join("bin/ffmpeg");
+        dev_path.to_string_lossy().to_string()
+    } else {
+        // Production mode - use bundled sidecar
+        app_handle.path().resolve("bin/ffmpeg", tauri::path::BaseDirectory::Resource)
+            .map_err(|e| {
+                CommandError::validation_error(format!("Failed to find FFmpeg: {}", e))
+            })?
+            .to_string_lossy()
+            .to_string()
+    };
+
+    // Verify FFmpeg binary exists
+    if !std::path::Path::new(&ffmpeg_path).exists() {
+        return Err(CommandError::ffmpeg_error(format!("FFmpeg binary not found at: {}", ffmpeg_path)));
+    }
 
     // Build FFmpeg command for thumbnail generation
-    let output = sidecar
-        .args(&[
-            "-ss",
-            &timestamp.to_string(), // Seek to timestamp
-            "-i",
-            file_path, // Input file
-            "-vframes",
-            "1", // Extract only 1 frame
-            "-vf",
-            &format!("scale={}:{}", width, height), // Scale to desired size
-            "-q:v",
-            "2",  // High quality
-            "-y", // Overwrite output file
-            thumbnail_path.to_string_lossy().as_ref(),
-        ])
-        .output()
-        .await
-        .map_err(|e| CommandError::ffmpeg_error(format!("Failed to execute ffmpeg: {}", e)))?;
+    use std::process::Command;
+    
+    // Clone values for the blocking task
+    let ffmpeg_path_clone = ffmpeg_path.clone();
+    let file_path_clone = file_path.to_string();
+    let thumbnail_path_clone = thumbnail_path.clone();
+    let timestamp_str = timestamp.to_string();
+    let scale_str = format!("scale={}:{}", width, height);
+    
+    // Run FFmpeg in a blocking task to avoid blocking the async runtime
+    let output = tokio::task::spawn_blocking(move || {
+        Command::new(&ffmpeg_path_clone)
+            .args(&[
+                "-ss",
+                &timestamp_str, // Seek to timestamp
+                "-i",
+                &file_path_clone, // Input file
+                "-vframes",
+                "1", // Extract only 1 frame
+                "-vf",
+                &scale_str, // Scale to desired size
+                "-q:v",
+                "2",  // High quality
+                "-y", // Overwrite output file
+                thumbnail_path_clone.to_string_lossy().as_ref(),
+            ])
+            .output()
+    })
+    .await
+    .map_err(|e| CommandError::ffmpeg_error(format!("Failed to spawn ffmpeg task: {}", e)))?
+    .map_err(|e| CommandError::ffmpeg_error(format!("Failed to execute ffmpeg: {}", e)))?;
 
     // Check if command succeeded
     if !output.status.success() {

@@ -10,6 +10,7 @@ pub mod file_ops;
 pub mod metadata;
 pub mod project;
 pub mod project_import;
+pub mod recording;
 
 // ============================================================================
 // COMMON ERROR TYPES
@@ -54,6 +55,10 @@ impl CommandError {
 
     pub fn serialization_error(message: String) -> Self {
         Self::new(message, "serialization_error".to_string())
+    }
+
+    pub fn recording_error(message: String) -> Self {
+        Self::new(message, "recording_error".to_string())
     }
 }
 

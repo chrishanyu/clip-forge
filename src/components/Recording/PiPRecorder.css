@@ -1,0 +1,231 @@
+/**
+ * PiPRecorder Component Styles
+ * 
+ * Styles for the Picture-in-Picture recording component that combines
+ * screen and webcam recording approaches.
+ */
+
+.pip-recorder {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  background: var(--color-surface);
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+}
+
+.pip-recorder-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-sm);
+}
+
+.pip-recorder-title {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.pip-recorder-status {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: var(--color-background);
+  border-radius: 4px;
+  border: 1px solid var(--color-border);
+}
+
+.pip-recorder-status-icon {
+  font-size: 1rem;
+}
+
+.pip-recorder-status-message {
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+}
+
+.pip-recorder-controls {
+  display: flex;
+  justify-content: center;
+  gap: var(--spacing-md);
+}
+
+.pip-recorder-button {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 160px;
+  justify-content: center;
+}
+
+.pip-recorder-button-start {
+  background: var(--color-danger);
+  color: white;
+}
+
+.pip-recorder-button-start:hover:not(:disabled) {
+  background: #dc2626;
+  transform: translateY(-1px);
+}
+
+.pip-recorder-button-stop {
+  background: var(--color-primary);
+  color: white;
+}
+
+.pip-recorder-button-stop:hover:not(:disabled) {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+
+.pip-recorder-button:disabled {
+  background: var(--color-background);
+  color: var(--color-text-secondary);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.pip-recorder-button-icon {
+  font-size: 1.1rem;
+}
+
+.pip-recorder-button-text {
+  font-weight: 500;
+}
+
+.pip-recorder-error {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 4px;
+  color: #dc2626;
+}
+
+.pip-recorder-error-icon {
+  font-size: 1rem;
+}
+
+.pip-recorder-error-message {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.pip-recorder-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 4px;
+  color: #dc2626;
+}
+
+.pip-recorder-indicator-dot {
+  width: 8px;
+  height: 8px;
+  background: #dc2626;
+  border-radius: 50%;
+  animation: pip-recorder-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pip-recorder-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.2);
+  }
+}
+
+.pip-recorder-indicator-text {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.pip-recorder-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  background: var(--color-background);
+  border-radius: 4px;
+  border: 1px solid var(--color-border);
+}
+
+.pip-recorder-info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-xs) 0;
+}
+
+.pip-recorder-info-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.pip-recorder-info-value {
+  font-size: 0.9rem;
+  color: var(--color-text);
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .pip-recorder {
+    padding: var(--spacing-md);
+  }
+  
+  .pip-recorder-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+  }
+  
+  .pip-recorder-info {
+    grid-template-columns: 1fr;
+  }
+  
+  .pip-recorder-button {
+    min-width: 140px;
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  .pip-recorder-error {
+    background: #1f1f1f;
+    border-color: #444;
+    color: #fca5a5;
+  }
+  
+  .pip-recorder-indicator {
+    background: #1f1f1f;
+    border-color: #444;
+    color: #fca5a5;
+  }
+  
+  .pip-recorder-indicator-dot {
+    background: #fca5a5;
+  }
+}
