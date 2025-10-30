@@ -226,52 +226,11 @@ export const PiPRecorder: React.FC<PiPRecorderProps> = ({
   };
 
   // ========================================================================
-  // RENDER HELPERS
-  // ========================================================================
-  
-  const getStatusMessage = () => {
-    if (recordingError) return `Error: ${recordingError.message}`;
-    if (isRecording) return 'Recording PiP...';
-    if (!webcamRecorder) return 'Initializing webcam...';
-    return 'Ready to record';
-  };
-
-  const getStatusIcon = () => {
-    if (recordingError) return '⚠️';
-    if (isRecording) return '🔴';
-    if (!webcamRecorder) return '⏳';
-    return '✅';
-  };
-
-  // ========================================================================
   // RENDER
   // ========================================================================
   
   return (
     <div className="pip-recorder">
-      <div className="pip-recorder-header">
-        <h3 className="pip-recorder-title">Picture-in-Picture Recording</h3>
-        <div className="pip-recorder-status">
-          <span className="pip-recorder-status-icon">{getStatusIcon()}</span>
-          <span className="pip-recorder-status-message">{getStatusMessage()}</span>
-        </div>
-      </div>
-
-      <div className="pip-recorder-controls">
-        <button
-          className={`pip-recorder-button ${isRecording ? 'pip-recorder-button-stop' : 'pip-recorder-button-start'}`}
-          onClick={isRecording ? stopPiPRecording : startPiPRecording}
-          disabled={!webcamRecorder && !recordingError}
-        >
-          <span className="pip-recorder-button-icon">
-            {isRecording ? '⏹️' : '🔴'}
-          </span>
-          <span className="pip-recorder-button-text">
-            {isRecording ? 'Stop Recording' : 'Start Recording'}
-          </span>
-        </button>
-      </div>
-
       {recordingError && (
         <div className="pip-recorder-error">
           <span className="pip-recorder-error-icon">⚠️</span>
@@ -287,25 +246,6 @@ export const PiPRecorder: React.FC<PiPRecorderProps> = ({
           <span className="pip-recorder-indicator-text">Recording in progress...</span>
         </div>
       )}
-
-      <div className="pip-recorder-info">
-        <div className="pip-recorder-info-item">
-          <span className="pip-recorder-info-label">Screen:</span>
-          <span className="pip-recorder-info-value">{settings.screenId}</span>
-        </div>
-        <div className="pip-recorder-info-item">
-          <span className="pip-recorder-info-label">Camera:</span>
-          <span className="pip-recorder-info-value">{settings.cameraId}</span>
-        </div>
-        <div className="pip-recorder-info-item">
-          <span className="pip-recorder-info-label">Position:</span>
-          <span className="pip-recorder-info-value">{settings.pipPosition}</span>
-        </div>
-        <div className="pip-recorder-info-item">
-          <span className="pip-recorder-info-label">Size:</span>
-          <span className="pip-recorder-info-value">{settings.pipSize}</span>
-        </div>
-      </div>
     </div>
   );
 };

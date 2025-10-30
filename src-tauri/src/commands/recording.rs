@@ -451,10 +451,62 @@ async fn start_pip_recording_impl(
     app_handle: tauri::AppHandle,
     settings: RecordingSettingsRequest,
 ) -> Result<String, CommandError> {
+    // Resolve FFmpeg path
+    let ffmpeg_path = if cfg!(debug_assertions) {
+        // Development mode: use direct path
+        let manifest_dir = std::env::var("CARGO_MANIFEST_DIR")
+            .map_err(|e| CommandError::validation_error(format!("Failed to get manifest dir: {}", e)))?;
+        format!("{}/bin/ffmpeg", manifest_dir)
+    } else {
+        // Production mode: resolve from resources
+        use tauri::Manager;
+        app_handle
+            .path()
+            .resolve("bin/ffmpeg", tauri::path::BaseDirectory::Resource)
+            .map_err(|e| CommandError::validation_error(format!("Failed to resolve FFmpeg path: {}", e)))?
+            .to_string_lossy()
+            .to_string()
+    };
+    
     // Create session
     let session_id = RECORDING_MANAGER
         .create_session(crate::recording::session::RecordingSessionType::PiP)
         .map_err(|e| CommandError::validation_error(format!("Failed to create session: {}", e)))?;
+    
+    // Convert settings to PiP settings
+    let pip_settings = crate::recording::pip::PiPRecordingSettings {
+        screen_id: settings.screen_id.clone().unwrap_or_default(),
+        camera_id: settings.camera_id.clone().unwrap_or_default(),
+        quality: settings.quality.clone(),
+        frame_rate: settings.frame_rate,
+        audio_enabled: settings.audio_enabled,
+        pip_position: match settings.pip_position.as_deref() {
+            Some("top-left") => crate::recording::pip::PiPPosition::TopLeft,
+            Some("top-right") => crate::recording::pip::PiPPosition::TopRight,
+            Some("bottom-right") => crate::recording::pip::PiPPosition::BottomRight,
+            _ => crate::recording::pip::PiPPosition::BottomLeft,
+        },
+        pip_size: match settings.pip_size.as_deref() {
+            Some("small") => crate::recording::pip::PiPSize::Small,
+            Some("large") => crate::recording::pip::PiPSize::Large,
+            _ => crate::recording::pip::PiPSize::Medium,
+        },
+        capture_area: None,
+        audio_device_id: settings.audio_device_id.clone(),
+    };
+    
+    // Start PiP recording
+    let file_path = crate::recording::pip::start_pip_recording(
+        session_id.clone(),
+        pip_settings,
+        &ffmpeg_path,
+        settings.project_id.clone(),
+    ).map_err(|e| CommandError::validation_error(format!("Failed to start PiP recording: {}", e)))?;
+    
+    // Update session with file path
+    RECORDING_MANAGER
+        .update_file_path(&session_id, file_path.clone())
+        .map_err(|e| CommandError::validation_error(format!("Failed to update file path: {}", e)))?;
     
     // Start session
     RECORDING_MANAGER
@@ -464,10 +516,6 @@ async fn start_pip_recording_impl(
     // Emit event to frontend
     app_handle.emit("recording-started", &session_id)
         .map_err(|e| CommandError::validation_error(format!("Failed to emit event: {}", e)))?;
-    
-    // TODO: Start actual AVFoundation PiP recording
-    // This will involve combining screen and camera streams
-    // For now, just return the session ID
     
     Ok(session_id)
 }

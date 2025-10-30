@@ -15,7 +15,7 @@
 .camera-preview-container {
   position: relative;
   width: 100%;
-  height: 200px;
+  height: 320px;
   background: #000000;
   border-radius: 8px;
   overflow: hidden;
@@ -242,7 +242,7 @@
 }
 
 .camera-preview.active {
-  border-color: #10B981;
+  border-color: #374151;
 }
 
 .camera-preview.active .camera-preview-type {

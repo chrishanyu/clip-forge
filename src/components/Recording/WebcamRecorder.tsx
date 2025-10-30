@@ -39,7 +39,6 @@ export const WebcamRecorder: React.FC<WebcamRecorderProps> = ({
   const { currentSession, error, startWebcamRecording, stopWebcamRecording } = useRecordingStore();
   
   const isRecording = currentSession?.type === 'webcam' && currentSession?.status === 'recording';
-  const recordingDuration = currentSession?.duration || 0;
   const recordingError = error;
 
   // ========================================================================
@@ -64,28 +63,6 @@ export const WebcamRecorder: React.FC<WebcamRecorderProps> = ({
   }, [recordingError, onError]);
 
   // ========================================================================
-  // HELPER FUNCTIONS
-  // ========================================================================
-  
-  const formatDuration = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const getStatusMessage = () => {
-    if (recordingError) return `Error: ${recordingError.message}`;
-    if (isRecording) return `Recording... ${formatDuration(recordingDuration)}`;
-    return 'Ready to record';
-  };
-
-  const getStatusIcon = () => {
-    if (recordingError) return '⚠️';
-    if (isRecording) return '🔴';
-    return '✅';
-  };
-
-  // ========================================================================
   // RENDER
   // ========================================================================
   
@@ -93,21 +70,11 @@ export const WebcamRecorder: React.FC<WebcamRecorderProps> = ({
     <div className="webcam-recorder">
       {/* Camera Preview - hide during recording since store manages its own stream */}
       {!isRecording && (
-        <div className="webcam-recorder-preview">
-          <CameraPreview
-            recordingType="webcam"
-            disabled={false}
-          />
-        </div>
+        <CameraPreview
+          recordingType="webcam"
+          disabled={false}
+        />
       )}
-
-      <div className="webcam-recorder-header">
-        <h3 className="webcam-recorder-title">Webcam Recording</h3>
-        <div className="webcam-recorder-status">
-          <span className="webcam-recorder-status-icon">{getStatusIcon()}</span>
-          <span className="webcam-recorder-status-message">{getStatusMessage()}</span>
-        </div>
-      </div>
 
       <div className="webcam-recorder-controls">
         <button
@@ -115,12 +82,7 @@ export const WebcamRecorder: React.FC<WebcamRecorderProps> = ({
           onClick={isRecording ? handleStopRecording : handleStartRecording}
           disabled={isRecording ? false : !settings.cameraId || !!recordingError}
         >
-          <span className="webcam-recorder-button-icon">
-            {isRecording ? '⏹️' : '🔴'}
-          </span>
-          <span className="webcam-recorder-button-text">
-            {isRecording ? 'Stop Recording' : 'Start Recording'}
-          </span>
+          {isRecording ? 'Stop Recording' : 'Start Recording'}
         </button>
       </div>
 
@@ -139,27 +101,6 @@ export const WebcamRecorder: React.FC<WebcamRecorderProps> = ({
           <span className="webcam-recorder-indicator-text">Recording in progress...</span>
         </div>
       )}
-
-      <div className="webcam-recorder-info">
-        <div className="webcam-recorder-info-item">
-          <span className="webcam-recorder-info-label">Camera:</span>
-          <span className="webcam-recorder-info-value">{settings.cameraId}</span>
-        </div>
-        <div className="webcam-recorder-info-item">
-          <span className="webcam-recorder-info-label">Quality:</span>
-          <span className="webcam-recorder-info-value">{settings.quality}</span>
-        </div>
-        <div className="webcam-recorder-info-item">
-          <span className="webcam-recorder-info-label">Audio:</span>
-          <span className="webcam-recorder-info-value">{settings.audioEnabled ? 'Enabled' : 'Disabled'}</span>
-        </div>
-        {isRecording && (
-          <div className="webcam-recorder-info-item">
-            <span className="webcam-recorder-info-label">Duration:</span>
-            <span className="webcam-recorder-info-value">{formatDuration(recordingDuration)}</span>
-          </div>
-        )}
-      </div>
     </div>
   );
 };

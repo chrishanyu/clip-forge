@@ -24,6 +24,7 @@ pub struct PiPRecordingSettings {
 
 /// Picture-in-Picture position
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
 pub enum PiPPosition {
     TopLeft,
     TopRight,
@@ -33,6 +34,7 @@ pub enum PiPPosition {
 
 /// Picture-in-Picture size
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
 pub enum PiPSize {
     Small,
     Medium,
@@ -67,32 +69,177 @@ impl PiPRecordingSession {
 
 /// Start Picture-in-Picture recording
 pub fn start_pip_recording(
+    session_id: String,
     settings: PiPRecordingSettings,
-) -> Result<PiPRecordingSession, String> {
-    let session_id = format!("pip_recording_{}", chrono::Utc::now().timestamp_millis());
-    let mut session = PiPRecordingSession::new(session_id, settings);
+    ffmpeg_path: &str,
+    project_id: String,
+) -> Result<String, String> {
+    start_pip_recording_with_id(session_id, settings, ffmpeg_path, project_id)
+}
+
+/// Start PiP recording with specified session ID
+fn start_pip_recording_with_id(
+    session_id: String,
+    settings: PiPRecordingSettings,
+    ffmpeg_path: &str,
+    project_id: String,
+) -> Result<String, String> {
+    use crate::recording::process_manager::PROCESS_MANAGER;
     
-    // TODO: Implement actual AVFoundation PiP recording
-    // This will involve:
-    // 1. Starting screen recording
-    // 2. Starting camera recording
-    // 3. Combining them with PiP overlay
-    // For now, just mark as recording
-    session.is_recording = true;
-    session.start_time = Some(std::time::Instant::now());
+    // Validate settings
+    validate_pip_settings(&settings)?;
+    
+    // Get project assets directory
+    let output_dir = get_project_assets_directory(&project_id)?;
     
     // Generate output file path
-    let output_dir = std::env::temp_dir().join("clipforge_recordings");
-    std::fs::create_dir_all(&output_dir).map_err(|e| format!("Failed to create output directory: {}", e))?;
+    let filename = format!("pip_recording_{}.mp4", session_id);
+    let output_path = output_dir.join(&filename);
     
-    let filename = format!("pip_recording_{}.mp4", session.id);
-    session.file_path = Some(output_dir.join(filename).to_string_lossy().to_string());
+    // Start FFmpeg PiP recording
+    start_avfoundation_pip_recording(&session_id, &settings, &output_path, ffmpeg_path)?;
     
-    // Create sub-sessions for tracking
-    session.screen_session = Some(format!("screen_{}", session.id));
-    session.camera_session = Some(format!("camera_{}", session.id));
+    Ok(output_path.to_string_lossy().to_string())
+}
+
+/// Get project assets directory
+fn get_project_assets_directory(project_id: &str) -> Result<std::path::PathBuf, String> {
+    let home_dir = dirs::home_dir()
+        .ok_or("Failed to get home directory")?;
     
-    Ok(session)
+    let assets_dir = home_dir
+        .join("Library")
+        .join("Application Support")
+        .join("com.clipforge.app")
+        .join("projects")
+        .join(project_id)
+        .join("assets");
+    
+    std::fs::create_dir_all(&assets_dir)
+        .map_err(|e| format!("Failed to create assets directory: {}", e))?;
+    
+    Ok(assets_dir)
+}
+
+/// Start AVFoundation PiP recording using FFmpeg with overlay filter
+fn start_avfoundation_pip_recording(
+    session_id: &str,
+    settings: &PiPRecordingSettings,
+    output_path: &std::path::PathBuf,
+    ffmpeg_path: &str,
+) -> Result<(), String> {
+    use crate::recording::process_manager::PROCESS_MANAGER;
+    
+    // Parse display ID from screen_id
+    let display_id = settings.screen_id
+        .strip_prefix("screen-")
+        .ok_or("Invalid screen ID format")?
+        .parse::<u32>()
+        .map_err(|_| "Invalid screen ID")?;
+    
+    let screen_index = if display_id > 0 { display_id - 1 } else { 0 };
+    
+    // Parse camera device ID
+    let camera_device_id = settings.camera_id.parse::<u32>().unwrap_or(0);
+    
+    // Build FFmpeg command for PiP recording
+    let mut args = vec![
+        // Screen input (AVFoundation format - video only, no audio from screen)
+        "-f".to_string(),
+        "avfoundation".to_string(),
+        "-r".to_string(),
+        settings.frame_rate.to_string(),
+        "-i".to_string(),
+        format!("Capture screen {}:", screen_index),
+        
+        // Camera input (AVFoundation format - video:audio)
+        // Format is "video_device:audio_device" for AVFoundation
+        // Using "N:0" captures video from device N and audio from default mic
+        "-f".to_string(),
+        "avfoundation".to_string(),
+        "-r".to_string(),
+        settings.frame_rate.to_string(),
+        "-i".to_string(),
+        format!("{}:0", camera_device_id),  // Capture both video AND audio from camera
+        
+        // Use wallclock as timestamps to ensure sync between inputs
+        "-use_wallclock_as_timestamps".to_string(),
+        "1".to_string(),
+    ];
+    
+    // Calculate PiP overlay dimensions and position
+    // We'll use a fixed screen resolution for now (will be scaled by FFmpeg)
+    // For "medium" size: 1/4 of screen width and height
+    // For "bottom-left" position: 20px padding from left and bottom edges
+    
+    // Create overlay filter with setpts for timestamp synchronization
+    // [0:v] = screen input, [1:v] = camera input
+    // Scale camera to 1/4 screen size, then overlay at bottom-left with 20px padding
+    // Use setpts to reset timestamps to ensure sync
+    let filter_complex = format!(
+        "[0:v]setpts=PTS-STARTPTS[screen];[1:v]setpts=PTS-STARTPTS,scale=iw/4:ih/4[pip];[screen][pip]overlay=20:main_h-overlay_h-20[vout]"
+    );
+    
+    args.push("-filter_complex".to_string());
+    args.push(filter_complex);
+    
+    // Map the video output from filter
+    args.push("-map".to_string());
+    args.push("[vout]".to_string());
+    
+    // Audio handling (if enabled, use audio from camera input [1:a])
+    if settings.audio_enabled {
+        args.push("-map".to_string());
+        args.push("1:a?".to_string()); // Map audio from camera input if available
+        args.push("-c:a".to_string());
+        args.push("aac".to_string());
+        args.push("-b:a".to_string());
+        args.push("128k".to_string());
+        // Use async to resample audio to match video and handle A/V drift
+        args.push("-af".to_string());
+        args.push("aresample=async=1:first_pts=0".to_string());
+    }
+    
+    // Video codec and quality settings
+    args.push("-c:v".to_string());
+    args.push("libx264".to_string());
+    
+    // Quality preset
+    args.push("-preset".to_string());
+    args.push("ultrafast".to_string());
+    
+    // CRF quality (lower = better quality, 18-28 is good range)
+    let crf = match settings.quality.as_str() {
+        "high" => "18",
+        "medium" => "23",
+        "low" => "28",
+        _ => "23",
+    };
+    args.push("-crf".to_string());
+    args.push(crf.to_string());
+    
+    // Pixel format for compatibility
+    args.push("-pix_fmt".to_string());
+    args.push("yuv420p".to_string());
+    
+    // Video sync method - sync video to audio timestamps
+    args.push("-vsync".to_string());
+    args.push("1".to_string());
+    
+    // Overwrite output file if it exists
+    args.push("-y".to_string());
+    
+    // Output file
+    args.push(output_path.to_string_lossy().to_string());
+    
+    // Start FFmpeg process using process manager
+    PROCESS_MANAGER.start_process(
+        session_id.to_string(),
+        ffmpeg_path.to_string(),
+        args,
+    )?;
+    
+    Ok(())
 }
 
 /// Stop Picture-in-Picture recording

@@ -175,13 +175,18 @@
 }
 
 /* ============================================================================
-   PIP SETTINGS
+   PIP POSITION INFO
    ============================================================================ */
 
-.pip-settings-section {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+.pip-position-info {
+  margin-top: 12px;
+  padding: 8px 12px;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 6px;
+  color: var(--color-text);
+  font-size: 13px;
+  text-align: center;
 }
 
 /* ============================================================================
@@ -318,6 +323,11 @@
   cursor: not-allowed;
   box-shadow: none;
   transform: none;
+}
+
+.recording-dialog-start-icon {
+  font-size: 16px;
+  line-height: 1;
 }
 
 .recording-dialog-start:focus {

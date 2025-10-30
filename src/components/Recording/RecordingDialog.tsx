@@ -10,8 +10,6 @@ import React, { useEffect, useState } from 'react';
 import { useRecordingStore } from '@/stores/recordingStore';
 import { DeviceSelector } from './DeviceSelector';
 import { CameraPreview } from './CameraPreview';
-import { PiPSettings } from './PiPSettings';
-import { PiPRecorder } from './PiPRecorder';
 import { WebcamRecorder } from './WebcamRecorder';
 import { RecordingType } from '@/types';
 import './RecordingDialog.css';
@@ -236,57 +234,24 @@ export const RecordingDialog: React.FC<RecordingDialogProps> = ({ isOpen, onClos
             </div>
           )}
 
-          {/* PiP Settings (for pip only) */}
-          {recordingType === 'pip' && (
-            <div className="pip-settings-section">
-              <h3 className="recording-section-title">Picture-in-Picture Settings</h3>
-              <PiPSettings
-                disabled={isStarting}
-              />
-            </div>
-          )}
-
           {/* Webcam Recorder (for webcam only) */}
           {/* Keep dialog open during webcam recording so component stays mounted */}
           {recordingType === 'webcam' && settings && 'cameraId' in settings && (
-            <div className="webcam-recorder-section">
-              <h3 className="recording-section-title">Webcam Recording</h3>
-              <WebcamRecorder
-                settings={settings as any}
-                onRecordingStart={() => {
-                  // DON'T close dialog - keep it open so WebcamRecorder stays mounted
-                }}
-                onRecordingStop={() => {
-                  // Close dialog after recording stops
-                  onClose();
-                }}
-                onError={(error) => {
-                  handleRecordingError(error);
-                }}
-              />
-            </div>
+            <WebcamRecorder
+              settings={settings as any}
+              onRecordingStart={() => {
+                // DON'T close dialog - keep it open so WebcamRecorder stays mounted
+              }}
+              onRecordingStop={() => {
+                // Close dialog after recording stops
+                onClose();
+              }}
+              onError={(error) => {
+                console.error('Webcam recording error:', error);
+              }}
+            />
           )}
 
-          {/* PiP Recorder (for pip only) */}
-          {recordingType === 'pip' && settings && 'screenId' in settings && 'cameraId' in settings && (
-            <div className="pip-recorder-section">
-              <h3 className="recording-section-title">Picture-in-Picture Recording</h3>
-              <PiPRecorder
-                settings={settings as any}
-                onRecordingStart={() => {
-                  // Close dialog when recording starts
-                  onClose();
-                }}
-                onRecordingStop={(filePath) => {
-                  console.log('PiP recording completed:', filePath);
-                  // TODO: Add to media library
-                }}
-                onError={(error) => {
-                  console.error('PiP recording error:', error);
-                }}
-              />
-            </div>
-          )}
 
           {/* Error Display */}
           {error && (

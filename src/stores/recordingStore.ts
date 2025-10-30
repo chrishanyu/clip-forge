@@ -272,8 +272,9 @@ export const useRecordingStore = create<RecordingStore>()(
             audio_enabled: settings.audioEnabled,
             audio_device_id: settings.audioDeviceId || null,
             show_preview: 'showPreview' in settings ? settings.showPreview : null,
-            pip_position: 'pipPosition' in settings ? settings.pipPosition : null,
-            pip_size: 'pipSize' in settings ? settings.pipSize : null,
+            // Hardcode PiP position to bottom-left
+            pip_position: 'bottom-left',
+            pip_size: 'medium',
             project_id: currentProject.id,
           };
 

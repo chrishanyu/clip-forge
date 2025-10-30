@@ -229,25 +229,6 @@ export const CameraPreview: React.FC<CameraPreviewProps> = ({
         </div>
       </div>
 
-      {/* Camera Info */}
-      {selectedCameraId && (
-        <div className="camera-preview-info">
-          <span className="camera-preview-camera-name">
-            {availableCameras.find(camera => camera.id === selectedCameraId)?.name || 'Unknown Camera'}
-          </span>
-          <span className="camera-preview-resolution">
-            {availableCameras.find(camera => camera.id === selectedCameraId)?.capabilities.maxWidth}x
-            {availableCameras.find(camera => camera.id === selectedCameraId)?.capabilities.maxHeight}
-          </span>
-        </div>
-      )}
-
-      {/* Recording Type Indicator */}
-      <div className="camera-preview-type">
-        <span className="camera-preview-type-label">
-          {recordingType === 'webcam' ? 'Webcam Recording' : 'Picture-in-Picture'}
-        </span>
-      </div>
     </div>
   );
 };
